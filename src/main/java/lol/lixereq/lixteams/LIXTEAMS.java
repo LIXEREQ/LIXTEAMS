@@ -1,9 +1,9 @@
-package com.bba.allied;
+package lol.lixereq.lixteams;
 
-import com.bba.allied.commands.commands;
-import com.bba.allied.commands.adminCommands;
-import com.bba.allied.data.datConfig;
-import com.bba.allied.teamUtils.teamUtils;
+import lol.lixereq.lixteams.commands.commands;
+import lol.lixereq.lixteams.commands.adminCommands;
+import lol.lixereq.lixteams.data.datConfig;
+import lol.lixereq.lixteams.teamUtils.teamUtils;
 import net.fabricmc.api.ModInitializer;
 
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -13,8 +13,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-public class Allied implements ModInitializer {
-	public static final String MOD_ID = "allied";
+public class LIXTEAMS implements ModInitializer {
+	public static final String MOD_ID = "lixteams";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     public static void runDelayed(MinecraftServer server, Runnable task, int ticks) {
@@ -27,7 +27,7 @@ public class Allied implements ModInitializer {
 
     @Override
 	public void onInitialize() {
-		LOGGER.info("Initialising Allied Mod...");
+		LOGGER.info("Initialising LIXTEAMS Mod...");
 
         try {
             datConfig.InitialiseDatFolder();
@@ -35,7 +35,7 @@ public class Allied implements ModInitializer {
             throw new RuntimeException(e);
         }
 
-		LOGGER.info("Allied Mod Data Loaded!");
+		LOGGER.info("LIXTEAMS Mod Data Loaded!");
 
         commands.registerCommands();
         adminCommands.registerCommands();

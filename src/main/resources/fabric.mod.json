@@ -1,29 +1,29 @@
 {
 	"schemaVersion": 1,
-	"id": "allied",
+	"id": "lixteams",
 	"version": "${version}",
-	"name": "Allied",
-	"description": "A mod re-imagining teams, an all in one mod with essential team features for fabric, forge and neo-forge",
+	"name": "LIXTEAMS",
+	"description": "An all-in-one team management mod for Fabric",
 	"authors": [
-		"Bba"
+		"LIXEREQ"
 	],
 	"contact": {
-		"sources": "https://github.com/bba5696/Allied"
+		"sources": "https://github.com/LIXEREQ/LIXTEAMS"
 	},
 	"license": "All Rights Reserved",
-	"icon": "assets/allied/allied.png",
+	"icon": "assets/lixteams/lixteams.png",
 	"environment": "server",
 	"entrypoints": {
 		"main": [
-			"com.bba.allied.Allied"
+			"lol.lixereq.lixteams.LIXTEAMS"
 		]
 	},
 	"mixins": [
-		"allied.mixins.json"
+		"lixteams.mixins.json"
 	],
 	"depends": {
 		"fabricloader": ">=0.19.2",
-		"minecraft": "~26.1.2",
+		"minecraft": "~26.2.0",
 		"java": ">=25",
 		"fabric-api": "*"
 	}

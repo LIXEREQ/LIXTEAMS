@@ -1,8 +1,8 @@
-package com.bba.allied.commands;
+package lol.lixereq.lixteams.commands;
 
-import com.bba.allied.data.datManager;
-import com.bba.allied.teamUtils.teamChatManager;
-import com.bba.allied.teamUtils.teamUtils;
+import lol.lixereq.lixteams.data.datManager;
+import lol.lixereq.lixteams.teamUtils.teamChatManager;
+import lol.lixereq.lixteams.teamUtils.teamUtils;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -25,12 +25,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @SuppressWarnings("ALL")
 public class commands {
-    public static final String MOD_ID = "allied";
+    public static final String MOD_ID = "lixteams";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     public static void registerCommands() {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> dispatcher.register(
-                Commands.literal("allied")
+                Commands.literal("lixteams")
 
                         .then(Commands.literal("create")
                                 .then(Commands.argument("name", StringArgumentType.string())
@@ -597,13 +597,11 @@ public class commands {
                                         .then(Commands.argument("value", StringArgumentType.greedyString())
                                                 .suggests((ctx, builder) -> {
                                                     String field = StringArgumentType.getString(ctx, "field");
-                                                    if (field.equalsIgnoreCase("color")) {
-                                                        for (ChatFormatting f : ChatFormatting.values()) {
-                                                            if (f.isColor()) {
-                                                                builder.suggest(f.getName());
+                                                        if (field.equalsIgnoreCase("color")) {
+                                                            for (String color : new String[]{"WHITE", "ORANGE", "MAGENTA", "LIGHT_BLUE", "YELLOW", "LIME", "PINK", "GRAY", "LIGHT_GRAY", "CYAN", "GREEN", "BROWN", "PURPLE", "BLUE", "GOLD", "RED", "BLACK"}) {
+                                                                builder.suggest(color);
                                                             }
                                                         }
-                                                    }
                                                     return builder.buildFuture();
                                                 })
                                                 .executes(context -> {

@@ -1,7 +1,7 @@
-package com.bba.allied.commands;
+package lol.lixereq.lixteams.commands;
 
-import com.bba.allied.data.datManager;
-import com.bba.allied.teamUtils.teamUtils;
+import lol.lixereq.lixteams.data.datManager;
+import lol.lixereq.lixteams.teamUtils.teamUtils;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -40,7 +40,7 @@ public class adminCommands {
 
     public static void registerCommands() {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> dispatcher.register(
-                Commands.literal("alliedAdmin")
+                Commands.literal("lixteamsAdmin")
                         .requires(Commands.hasPermission(Commands.LEVEL_ADMINS))
                         .then(Commands.literal("memberCap")
                                 .then(Commands.argument("value", IntegerArgumentType.integer(1))
@@ -227,7 +227,7 @@ public class adminCommands {
                                     );
 
                                     context.getSource().sendSuccess(
-                                            () -> Component.literal("Please enter the code to confirm: /alliedAdmin reset " + code).withStyle(ChatFormatting.YELLOW),
+                                            () -> Component.literal("Please enter the code to confirm: /lixteamsAdmin reset " + code).withStyle(ChatFormatting.YELLOW),
                                             false
                                     );
 

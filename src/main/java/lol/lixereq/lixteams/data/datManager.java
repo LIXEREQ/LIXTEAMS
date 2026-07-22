@@ -1,6 +1,6 @@
-package com.bba.allied.data;
+package lol.lixereq.lixteams.data;
 
-import com.bba.allied.teamUtils.teamUtils;
+import lol.lixereq.lixteams.teamUtils.teamUtils;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import net.fabricmc.loader.api.FabricLoader;
@@ -23,13 +23,13 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 
-import static com.bba.allied.data.datConfig.CreateDefault;
-import static com.bba.allied.teamUtils.teamUtils.toTeamId;
+import static lol.lixereq.lixteams.data.datConfig.CreateDefault;
+import static lol.lixereq.lixteams.teamUtils.teamUtils.toTeamId;
 
 public class datManager {
-    public static final String MOD_ID = "allied";
+    public static final String MOD_ID = "lixteams";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
-    Path path = FabricLoader.getInstance().getConfigDir().resolve("allied").resolve("teams.dat");
+    Path path = FabricLoader.getInstance().getConfigDir().resolve("lixteams").resolve("teams.dat");
 
     private static datManager INSTANCE;
     private CompoundTag data;
@@ -47,7 +47,7 @@ public class datManager {
         save();
         datConfig.InitialiseDatFolder();
 
-        LOGGER.info("ALLIED MOD DATA HAS BEEN RESET!");
+        LOGGER.info("LIXTEAMS MOD DATA HAS BEEN RESET!");
 
         teamUtils.rebuildTeams(server);
     }
@@ -213,7 +213,7 @@ public class datManager {
             Optional<String> storedOwner = teamData.getString("owner");
 
             if (ownerStr.equalsIgnoreCase(storedOwner.orElse(null))) {
-                throw new SimpleCommandExceptionType(Component.nullToEmpty("You can't leave your own team, do '/allied  disband' instead!")).create();
+                throw new SimpleCommandExceptionType(Component.nullToEmpty("You can't leave your own team, do '/lixteams disband' instead!")).create();
             }
         }
 
@@ -303,14 +303,14 @@ public class datManager {
             Component accept = Component.literal("[ACCEPT]")
                     .withStyle(ChatFormatting.GREEN)
                     .withStyle(style -> style
-                            .withClickEvent(new ClickEvent.RunCommand("/allied accept"+ " " + playerUUID))
+                            .withClickEvent(new ClickEvent.RunCommand("/lixteams accept"+ " " + playerUUID))
                             .withHoverEvent(new HoverEvent.ShowText(Component.literal("Accept join request")))
                     );
 
             Component deny = Component.literal("[DENY]")
                     .withStyle(ChatFormatting.RED)
                     .withStyle(style -> style
-                            .withClickEvent(new ClickEvent.RunCommand("/allied deny" + " " + playerUUID))
+                            .withClickEvent(new ClickEvent.RunCommand("/lixteams deny" + " " + playerUUID))
                             .withHoverEvent(new HoverEvent.ShowText(Component.literal("Deny join request")))
                     );
 
@@ -425,11 +425,11 @@ public class datManager {
         Component accept = Component.literal("[ACCEPT]")
                 .withStyle(ChatFormatting.GREEN)
                 .withStyle(s -> s.withClickEvent(
-                        new ClickEvent.RunCommand("/allied invAccept " + finalTeamName)));
+                        new ClickEvent.RunCommand("/lixteams invAccept " + finalTeamName)));
         Component deny = Component.literal("[DENY]")
                 .withStyle(ChatFormatting.RED)
                 .withStyle(s -> s.withClickEvent(
-                        new ClickEvent.RunCommand("/allied invDeny " + finalTeamName)));
+                        new ClickEvent.RunCommand("/lixteams invDeny " + finalTeamName)));
 
         targetPlayer.sendSystemMessage(
                 Component.literal("You were invited to join team ")
@@ -557,14 +557,14 @@ public class datManager {
             Component enableButton = Component.literal("[ENABLE]")
                     .withStyle(style -> style
                             .withColor(ChatFormatting.GREEN)
-                            .withClickEvent(new ClickEvent.RunCommand("/allied settings" + " " + key + " " + true))
+                            .withClickEvent(new ClickEvent.RunCommand("/lixteams settings" + " " + key + " " + true))
                             .withHoverEvent(new HoverEvent.ShowText(Component.literal("Enable " + key)))
                     );
 
             Component disableButton = Component.literal("[DISABLE]")
                     .withStyle(style -> style
                             .withColor(ChatFormatting.RED)
-                            .withClickEvent(new ClickEvent.RunCommand("/allied settings" + " " + key + " " + false))
+                            .withClickEvent(new ClickEvent.RunCommand("/lixteams settings" + " " + key + " " + false))
                             .withHoverEvent(new HoverEvent.ShowText(Component.literal("Disable " + key)))
                     );
 
@@ -632,7 +632,7 @@ public class datManager {
                             .withColor(ChatFormatting.GREEN)
                             .withClickEvent(
                                     new ClickEvent.RunCommand(
-                                            "/alliedAdmin modify_settings " + teamName + " " + key + " true"
+                                            "/lixteamsAdmin modifySettings " + teamName + " " + key + " true"
                                     )
                             )
                     );
@@ -642,7 +642,7 @@ public class datManager {
                             .withColor(ChatFormatting.RED)
                             .withClickEvent(
                                     new ClickEvent.RunCommand(
-                                            "/alliedAdmin modify_settings " + teamName + " " + key + " false"
+                                            "/lixteamsAdmin modifySettings " + teamName + " " + key + " false"
                                     )
                             )
                     );
@@ -734,9 +734,9 @@ public class datManager {
 
             case "color" -> {
                 try {
-                    ChatFormatting f = ChatFormatting.valueOf(value.toUpperCase());
-                    if (!f.isColor()) throw new IllegalArgumentException();
-                    foundTeam.putString("tagColor", f.getName());
+                    // Validate the color string
+                    ChatFormatting.valueOf(value.toUpperCase());
+                    foundTeam.putString("tagColor", value.toUpperCase());
                 } catch (Exception e) {
                     throw new SimpleCommandExceptionType(
                             Component.literal("Invalid color.")

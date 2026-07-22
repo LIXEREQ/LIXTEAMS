@@ -1,4 +1,4 @@
-package com.bba.allied.teamUtils;
+package lol.lixereq.lixteams.teamUtils;
 
 import java.util.HashSet;
 import java.util.UUID;

@@ -1,4 +1,4 @@
-package com.bba.allied.data;
+package lol.lixereq.lixteams.data;
 
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.nbt.CompoundTag;
@@ -12,9 +12,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class datConfig {
-    public static final String MOD_ID = "allied";
+    public static final String MOD_ID = "lixteams";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
-    static Path path = FabricLoader.getInstance().getConfigDir().resolve("allied").resolve("teams.dat");
+    static Path path = FabricLoader.getInstance().getConfigDir().resolve("lixteams").resolve("teams.dat");
 
     public static void InitialiseDatFolder() throws IOException {
         Files.createDirectories(path.getParent());

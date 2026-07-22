@@ -1,6 +1,6 @@
-package com.bba.allied.teamUtils;
+package lol.lixereq.lixteams.teamUtils;
 
-import com.bba.allied.data.datManager;
+import lol.lixereq.lixteams.data.datManager;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.ChatFormatting;
@@ -263,7 +263,6 @@ public class teamUtils {
 
                 team.setPlayerPrefix(prefix);
                 team.setPlayerSuffix(Component.empty());
-                team.setColor(ChatFormatting.WHITE);
                 scoreboard.addPlayerToTeam(player.getScoreboardName(), team);
                 return;
             }
@@ -289,6 +288,7 @@ public class teamUtils {
         return name.toLowerCase().replaceAll("\\s+", "");
     }
 
+
     public static PlayerTeam addTeam(
             MinecraftServer server,
             String fullName,
@@ -303,7 +303,6 @@ public class teamUtils {
         }
 
         team.setDisplayName(Component.literal(fullName));
-        team.setColor(color);
 
         return team;
     }

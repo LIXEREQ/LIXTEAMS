@@ -1,6 +1,6 @@
-package com.bba.allied.mixin;
+package lol.lixereq.lixteams.mixin;
 
-import com.bba.allied.data.datManager;
+import lol.lixereq.lixteams.data.datManager;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;

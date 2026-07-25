@@ -48,6 +48,11 @@ public class datConfig {
         settings.putInt("maxTeamNameLength", 16);
         settings.putInt("maxTeamTagLength", 4);
 
+        settings.putInt("currencyDelay", 1800);
+
+        CompoundTag playerCurrencies = new CompoundTag();
+        root.put("playerCurrencies", playerCurrencies);
+
         return root;
     }
 }

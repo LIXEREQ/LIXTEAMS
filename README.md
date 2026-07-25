@@ -6,7 +6,10 @@
 
 # LIXTEAMS
 
-**This mod is currently just the Allied mod ported over to Minecraft 26.2, but the plan is to add an economy with team based currencies**
+**This mod is a fork of Allied that adds an economy system**
+
+**Because i dislike java the new code is mostly written by Gemma 4 26B A4B and Qwen 3.6 35B A6B running locally on my second GPU**
+**If you want new features or have other issues with this mod you can make a GitHub issue**
 
 **This mod allows players to create and make teams, featuring friendly fire, Seeing teamates while there invisible. all togglable in settings, these features are easily accessed with `/lixteams`**
 <hr>
@@ -38,12 +41,3 @@
 - `/lixteamsAdmin modifySettings <teamName> <settings> <boolean>` Modifies the settings of a team
 
 <hr>
-
-**This description is currently up to date with v1.1.0 of the mod**
-
-**If you like the mod, please consider donating to support my development**
-
-**Any issues, bugs or suggestions are to be put on the github issue page**
-
-**The mods inspiration came from there not being any team mods for fabric that is up to date**
-## Thank you for using my mod <3

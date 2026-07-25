@@ -856,6 +856,111 @@ public class datManager {
         return info;
     }
 
+    public String getTeamCurrencyName(String teamName) {
+        CompoundTag teams = data.getCompoundOrEmpty("teams");
+        CompoundTag teamData = teams.getCompoundOrEmpty(teamName);
+        return teamData.getString("currencyName").orElse("");
+    }
+
+    public void setTeamCurrencyName(String teamName, String currencyName) throws IOException {
+        CompoundTag teams = data.getCompoundOrEmpty("teams");
+        CompoundTag teamData = teams.getCompoundOrEmpty(teamName);
+        teamData.putString("currencyName", currencyName);
+        save();
+    }
+
+    public ListTag getTeamCurrencyTag(String teamName) {
+        CompoundTag teams = data.getCompoundOrEmpty("teams");
+        CompoundTag teamData = teams.getCompoundOrEmpty(teamName);
+        return teamData.getListOrEmpty("currencyTag");
+    }
+
+    public void setTeamCurrencyTag(String teamName, ListTag currencyTag) throws IOException {
+        CompoundTag teams = data.getCompoundOrEmpty("teams");
+        CompoundTag teamData = teams.getCompoundOrEmpty(teamName);
+        teamData.put("currencyTag", currencyTag);
+        save();
+    }
+
+    private CompoundTag getPlayerCurrencyData(String playerUuid) {
+        CompoundTag playerCurrencies = data.getCompoundOrEmpty("playerCurrencies");
+        String key = playerUuid;
+        if (playerCurrencies.contains(key)) {
+            return playerCurrencies.getCompound(key).orElse(new CompoundTag());
+        }
+        CompoundTag empty = new CompoundTag();
+        return empty;
+    }
+
+    public long getPlayerCurrencyBalance(String playerUuid, String currencyName) {
+        CompoundTag currencyData = getPlayerCurrencyData(playerUuid);
+        String key = currencyName;
+        if (currencyData.contains(key)) {
+            return currencyData.getLong(key).orElse(0L);
+        }
+        return 0L;
+    }
+
+    public void setPlayerCurrencyBalance(String playerUuid, String currencyName, long balance) throws IOException {
+        CompoundTag playerCurrencies = data.getCompoundOrEmpty("playerCurrencies");
+        String key = playerUuid;
+        CompoundTag currencyData;
+        if (playerCurrencies.contains(key)) {
+            currencyData = playerCurrencies.getCompound(key).orElse(new CompoundTag());
+        } else {
+            currencyData = new CompoundTag();
+        }
+        currencyData.putLong(currencyName, balance);
+        playerCurrencies.put(key, currencyData);
+        save();
+    }
+
+    public void addPlayerCurrencyBalance(String playerUuid, String currencyName, long amount) throws IOException {
+        long current = getPlayerCurrencyBalance(playerUuid, currencyName);
+        setPlayerCurrencyBalance(playerUuid, currencyName, current + amount);
+    }
+
+    public void subtractPlayerCurrencyBalance(String playerUuid, String currencyName, long amount) throws IOException {
+        long current = getPlayerCurrencyBalance(playerUuid, currencyName);
+        setPlayerCurrencyBalance(playerUuid, currencyName, Math.max(0L, current - amount));
+    }
+
+    public boolean hasCurrency(String teamName) {
+        CompoundTag teams = data.getCompoundOrEmpty("teams");
+        CompoundTag teamData = teams.getCompoundOrEmpty(teamName);
+        String currencyName = teamData.getString("currencyName").orElse("");
+        return !currencyName.isEmpty();
+    }
+
+    public String getTeamCurrencyTagString(String teamName) {
+        CompoundTag teams = data.getCompoundOrEmpty("teams");
+        CompoundTag teamData = teams.getCompoundOrEmpty(teamName);
+        ListTag currencyTag = teamData.getListOrEmpty("currencyTag");
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < currencyTag.size(); i++) {
+            sb.append(currencyTag.getString(i).orElse(""));
+        }
+        return sb.toString();
+    }
+
+    public List<String> getPlayerCurrencies(String playerUuid) {
+        CompoundTag playerCurrencies = data.getCompoundOrEmpty("playerCurrencies");
+        String key = playerUuid;
+        if (!playerCurrencies.contains(key)) {
+            return List.of();
+        }
+        CompoundTag currencyData = playerCurrencies.getCompound(key).orElse(new CompoundTag());
+        List<String> result = new ArrayList<>();
+        for (String currencyName : currencyData.keySet()) {
+            result.add(currencyName);
+        }
+        return result;
+    }
+
+    public boolean hasCurrencyBalance(String playerUuid, String currencyName) {
+        return getPlayerCurrencyBalance(playerUuid, currencyName) > 0;
+    }
+
     public static CompoundTag createTeam(String teamTag, UUID ownerUUID) {
         CompoundTag teamData = new CompoundTag();
 
@@ -879,7 +984,9 @@ public class datManager {
 
         teamData.put("settings", settings);
 
+        teamData.putString("currencyName", "");
+        teamData.put("currencyTag", new ListTag());
+        
         return teamData;
     }
 }
-

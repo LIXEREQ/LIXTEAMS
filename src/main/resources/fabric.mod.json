@@ -3,7 +3,7 @@
 	"id": "lixteams",
 	"version": "${version}",
 	"name": "LIXTEAMS",
-	"description": "An all-in-one team management mod for Fabric",
+	"description": "A teams mod with an integrated economy system",
 	"authors": [
 		"LIXEREQ"
 	],

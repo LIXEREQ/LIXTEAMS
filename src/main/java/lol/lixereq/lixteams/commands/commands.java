@@ -4,6 +4,7 @@ import lol.lixereq.lixteams.data.datManager;
 import lol.lixereq.lixteams.teamUtils.teamChatManager;
 import lol.lixereq.lixteams.teamUtils.teamUtils;
 import com.mojang.brigadier.arguments.BoolArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -12,7 +13,9 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -20,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -440,13 +444,35 @@ public class commands {
                                         membersText.append("(").append(offlineCount.get()).append(") Offline");
                                     }
 
-                                    Component infoMessage = Component.literal("§6=== Team Info ===\n")
-                                            .append(Component.literal("§eTeam Name: §f" + teamName + "\n"))
-                                            .append(Component.literal("§eTeam Tag: §f" + teamTag + "\n"))
-                                            .append(Component.literal("§eOwner: §f" + ownerName + "\n"))
-                                            .append(Component.literal("§eMembers: §f" + (membersText.length() > 0 ? membersText : "None")));
+                                    String currencyName = playerTeam.getString("currencyName").orElse("");
+                                    ListTag currencyTag = playerTeam.getListOrEmpty("currencyTag");
+                                    StringBuilder currencyTagBuilder = new StringBuilder();
+                                    for (int i = 0; i < currencyTag.size(); i++) {
+                                        currencyTagBuilder.append(currencyTag.getString(i).orElse(""));
+                                    }
+                                    boolean hasCurrency = !currencyName.isEmpty() || currencyTag.size() > 0;
 
-                                    context.getSource().sendSuccess(() -> infoMessage, false);
+                                    final MutableComponent[] infoMessage = new MutableComponent[1];
+                                    if (hasCurrency) {
+                                        infoMessage[0] = Component.literal("ยง6=== Team Info ===\n")
+                                                .append(Component.literal("ยงeTeam Name: ยงf" + teamName + "\n"))
+                                                .append(Component.literal("ยงeTeam Tag: ยงf" + teamTag + "\n"))
+                                                .append(Component.literal("ยงeOwner: ยงf" + ownerName + "\n"))
+                                                .append(Component.literal("ยงeMembers: ยงf" + (membersText.length() > 0 ? membersText : "None")))
+                                                .append(Component.literal("\nยงeCurrency: ยงf"))
+                                                .append(Component.literal(currencyName).withStyle(ChatFormatting.YELLOW))
+                                                .append(Component.literal(" ["))
+                                                .append(Component.literal(currencyTagBuilder.toString()).withStyle(ChatFormatting.GOLD))
+                                                .append(Component.literal("]"));
+                                    } else {
+                                        infoMessage[0] = Component.literal("ยง6=== Team Info ===\n")
+                                                .append(Component.literal("ยงeTeam Name: ยงf" + teamName + "\n"))
+                                                .append(Component.literal("ยงeTeam Tag: ยงf" + teamTag + "\n"))
+                                                .append(Component.literal("ยงeOwner: ยงf" + ownerName + "\n"))
+                                                .append(Component.literal("ยงeMembers: ยงf" + (membersText.length() > 0 ? membersText : "None")));
+                                    }
+
+                                    context.getSource().sendSuccess(() -> infoMessage[0], false);
 
                                     return 1;
                                 })
@@ -592,6 +618,8 @@ public class commands {
                                             builder.suggest("name");
                                             builder.suggest("tag");
                                             builder.suggest("color");
+                                            builder.suggest("currencyName");
+                                            builder.suggest("currencyTag");
                                             return builder.buildFuture();
                                         })
                                         .then(Commands.argument("value", StringArgumentType.greedyString())
@@ -627,6 +655,276 @@ public class commands {
                                                     return 1;
                                                 })
                                         )
+                                )
+                        )
+
+                        .then(Commands.literal("createCurrency")
+                                .then(Commands.argument("name", StringArgumentType.string())
+                                        .then(Commands.argument("tag", StringArgumentType.string())
+                                                .executes(context -> {
+                                                    ServerPlayer player = context.getSource().getPlayer();
+                                                    assert player != null;
+
+                                                    String teamName = datManager.get().getTeam(player.getUUID());
+                                                    if (teamName == null) {
+                                                        context.getSource().sendFailure(
+                                                                Component.literal("You are not in a team!")
+                                                        );
+                                                        return 0;
+                                                    }
+
+                                                    CompoundTag teams = datManager.get().getData().getCompoundOrEmpty("teams");
+                                                    CompoundTag teamData = teams.getCompoundOrEmpty(teamName);
+                                                    String ownerStr = teamData.getString("owner").orElse("");
+
+                                                    if (!ownerStr.equalsIgnoreCase(player.getUUID().toString())) {
+                                                        context.getSource().sendFailure(
+                                                                Component.literal("Only the team leader can create a currency!")
+                                                        );
+                                                        return 0;
+                                                    }
+
+                                                    String currencyName = StringArgumentType.getString(context, "name");
+                                                    String currencyTagRaw = StringArgumentType.getString(context, "tag");
+
+                                                    String existingCurrencyName = teamData.getString("currencyName").orElse("");
+                                                    if (!existingCurrencyName.isEmpty()) {
+                                                        context.getSource().sendFailure(
+                                                                Component.literal("Your team already has a currency! Use '/lixteams set currencyName' or '/lixteams set currencyTag' to modify it, or '/lixteams removeCurrency' to remove it first.")
+                                                        );
+                                                        return 0;
+                                                    }
+
+                                                    for (String existingTeamName : teams.keySet()) {
+                                                        CompoundTag existingTeam = teams.getCompoundOrEmpty(existingTeamName);
+                                                        String existingName = existingTeam.getString("currencyName").orElse("");
+                                                        if (existingName.equalsIgnoreCase(currencyName)) {
+                                                            context.getSource().sendFailure(
+                                                                    Component.literal("A currency with this name already exists!")
+                                                            );
+                                                            return 0;
+                                                        }
+                                                    }
+
+                                                    for (String existingTeamName : teams.keySet()) {
+                                                        CompoundTag existingTeam = teams.getCompoundOrEmpty(existingTeamName);
+                                                        ListTag existingCurrencyTag = existingTeam.getListOrEmpty("currencyTag");
+                                                        StringBuilder tagBuilder = new StringBuilder();
+                                                        for (int i = 0; i < existingCurrencyTag.size(); i++) {
+                                                            tagBuilder.append(existingCurrencyTag.getString(i).orElse(""));
+                                                        }
+                                                        if (tagBuilder.toString().equalsIgnoreCase(currencyTagRaw)) {
+                                                            context.getSource().sendFailure(
+                                                                    Component.literal("A currency with this tag already exists!")
+                                                            );
+                                                            return 0;
+                                                        }
+                                                    }
+
+                                                    ListTag currencyTag = new ListTag();
+                                                    for (char c : currencyTagRaw.toCharArray()) {
+                                                        currencyTag.add(StringTag.valueOf(String.valueOf(c)));
+                                                    }
+
+                                                    try {
+                                                        datManager.get().setTeamCurrencyName(teamName, currencyName);
+                                                        datManager.get().setTeamCurrencyTag(teamName, currencyTag);
+                                                    } catch (IOException e) {
+                                                        context.getSource().sendFailure(
+                                                                Component.literal("Failed to save currency data.")
+                                                        );
+                                                        e.printStackTrace();
+                                                        return 0;
+                                                    }
+
+                                                    context.getSource().sendSuccess(
+                                                            () -> Component.literal("Currency created: ")
+                                                                    .append(Component.literal(currencyName).withStyle(ChatFormatting.YELLOW))
+                                                                    .append(Component.literal(" [")
+                                                                    .append(Component.literal(currencyTagRaw).withStyle(ChatFormatting.GOLD))
+                                                                    .append(Component.literal("]"))
+                                                                    .withStyle(ChatFormatting.YELLOW)),
+                                                            false
+                                                    );
+                                                    return 1;
+                                                })
+                                        )
+                                )
+                        )
+
+                        .then(Commands.literal("listCurrencies")
+                                .executes(context -> {
+                                    CompoundTag teams = datManager.get().getData().getCompoundOrEmpty("teams");
+                                    MutableComponent message = Component.literal("ยง6=== Available Currencies ===\n").withStyle(ChatFormatting.GOLD);
+
+                                    boolean hasCurrencies = false;
+                                    for (String teamName : teams.keySet()) {
+                                        CompoundTag teamData = teams.getCompoundOrEmpty(teamName);
+                                        String currencyName = teamData.getString("currencyName").orElse("");
+                                        ListTag currencyTag = teamData.getListOrEmpty("currencyTag");
+
+                                        if (!currencyName.isEmpty() || currencyTag.size() > 0) {
+                                            hasCurrencies = true;
+                                            StringBuilder tagBuilder = new StringBuilder();
+                                            for (int i = 0; i < currencyTag.size(); i++) {
+                                                tagBuilder.append(currencyTag.getString(i).orElse(""));
+                                            }
+                                            Component currencyEntry = Component.literal("โ�ข ")
+                                                    .withStyle(ChatFormatting.YELLOW)
+                                                    .append(Component.literal(currencyName.isEmpty() ? "(unnamed)" : currencyName).withStyle(ChatFormatting.YELLOW))
+                                                    .append(Component.literal(" [")).withStyle(ChatFormatting.YELLOW)
+                                                    .append(Component.literal(tagBuilder.toString().isEmpty() ? "?" : tagBuilder.toString()).withStyle(ChatFormatting.GOLD))
+                                                    .append(Component.literal("] by ")).withStyle(ChatFormatting.YELLOW)
+                                                    .append(Component.literal(teamName).withStyle(ChatFormatting.WHITE))
+                                                    .append(Component.literal("\n")).withStyle(ChatFormatting.YELLOW);
+
+                                            message.append(currencyEntry);
+                                        }
+                                    }
+
+                                    if (!hasCurrencies) {
+                                        message.append(Component.literal("No currencies have been created yet.").withStyle(ChatFormatting.GRAY));
+                                    }
+
+                                    context.getSource().sendSuccess(() -> message, false);
+                                    return 1;
+                                })
+                        )
+
+                        .then(Commands.literal("removeCurrency")
+                                .executes(context -> {
+                                    ServerPlayer player = context.getSource().getPlayer();
+                                    assert player != null;
+
+                                    String teamName = datManager.get().getTeam(player.getUUID());
+                                    if (teamName == null) {
+                                        context.getSource().sendFailure(
+                                                Component.literal("You are not in a team!")
+                                        );
+                                        return 0;
+                                    }
+
+                                    CompoundTag teams = datManager.get().getData().getCompoundOrEmpty("teams");
+                                    CompoundTag teamData = teams.getCompoundOrEmpty(teamName);
+                                    String ownerStr = teamData.getString("owner").orElse("");
+
+                                    if (!ownerStr.equalsIgnoreCase(player.getUUID().toString())) {
+                                        context.getSource().sendFailure(
+                                                Component.literal("Only the team leader can remove a currency!")
+                                        );
+                                        return 0;
+                                    }
+
+                                    String existingCurrencyName = teamData.getString("currencyName").orElse("");
+                                    if (existingCurrencyName.isEmpty()) {
+                                        context.getSource().sendFailure(
+                                                Component.literal("Your team does not have a currency!")
+                                        );
+                                        return 0;
+                                    }
+
+                                    try {
+                                        teamData.putString("currencyName", "");
+                                        teamData.put("currencyTag", new ListTag());
+
+                                        datManager.get().getData().put("teams", teams);
+                                        datManager.get().save();
+                                    } catch (IOException e) {
+                                        context.getSource().sendFailure(
+                                                Component.literal("Failed to remove currency data.")
+                                        );
+                                        e.printStackTrace();
+                                        return 0;
+                                    }
+
+                                    context.getSource().sendSuccess(
+                                            () -> Component.literal("Currency removed successfully!"),
+                                            false
+                                    );
+                                    return 1;
+                                })
+                        )
+
+                        .then(Commands.literal("generateCurrency")
+                                .then(Commands.argument("amount", IntegerArgumentType.integer(1))
+                                        .executes(context -> {
+                                            ServerPlayer player = context.getSource().getPlayer();
+                                            assert player != null;
+
+                                            String teamName = datManager.get().getTeam(player.getUUID());
+                                            if (teamName == null) {
+                                                context.getSource().sendFailure(
+                                                        Component.literal("You are not in a team!")
+                                                );
+                                                return 0;
+                                            }
+
+                                            CompoundTag teams = datManager.get().getData().getCompoundOrEmpty("teams");
+                                            CompoundTag teamData = teams.getCompoundOrEmpty(teamName);
+                                            String ownerStr = teamData.getString("owner").orElse("");
+
+                                            if (!ownerStr.equalsIgnoreCase(player.getUUID().toString())) {
+                                                context.getSource().sendFailure(
+                                                        Component.literal("Only the team leader can generate currency!")
+                                                );
+                                                return 0;
+                                            }
+
+                                            String currencyName = teamData.getString("currencyName").orElse("");
+                                            if (currencyName.isEmpty()) {
+                                                context.getSource().sendFailure(
+                                                        Component.literal("Your team does not have a currency!")
+                                                );
+                                                return 0;
+                                            }
+
+                                            int amount = IntegerArgumentType.getInteger(context, "amount");
+
+                                            try {
+                                                datManager.get().addPlayerCurrencyBalance(player.getUUID().toString(), currencyName, amount);
+                                            } catch (IOException e) {
+                                                context.getSource().sendFailure(
+                                                        Component.literal("Failed to generate currency.")
+                                                );
+                                                e.printStackTrace();
+                                                return 0;
+                                            }
+
+                                            String currencyTagStr = datManager.get().getTeamCurrencyTagString(teamName);
+                                            Component generatedMsg = Component.literal("Generated ")
+                                                    .withStyle(ChatFormatting.YELLOW)
+                                                    .append(Component.literal(String.valueOf(amount)).withStyle(ChatFormatting.YELLOW))
+                                                    .append(Component.literal(" "))
+                                                    .append(Component.literal(currencyName).withStyle(ChatFormatting.YELLOW))
+                                                    .append(Component.literal(" ["))
+                                                    .append(Component.literal(currencyTagStr).withStyle(ChatFormatting.GOLD))
+                                                    .append(Component.literal("]"))
+                                                    .append(Component.literal(" for yourself!"));
+
+                                            context.getSource().sendSuccess(() -> generatedMsg, false);
+
+                                            // Broadcast global message
+                                            MinecraftServer server = context.getSource().getServer();
+                                            String playerName = player.getGameProfile().name();
+                                            Component globalMsg = Component.literal("โ ")
+                                                    .append(Component.literal(playerName).withStyle(ChatFormatting.GREEN))
+                                                    .append(Component.literal(" generated "))
+                                                    .append(Component.literal(String.valueOf(amount)).withStyle(ChatFormatting.YELLOW))
+                                                    .append(Component.literal(" "))
+                                                    .append(Component.literal(currencyName).withStyle(ChatFormatting.YELLOW))
+                                                    .append(Component.literal(" ["))
+                                                    .append(Component.literal(currencyTagStr).withStyle(ChatFormatting.GOLD))
+                                                    .append(Component.literal("]"))
+                                                    .append(Component.literal(" for team "))
+                                                    .append(Component.literal(teamName).withStyle(ChatFormatting.WHITE))
+                                                    .append(Component.literal("!"));
+
+                                            for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+                                                p.sendSystemMessage(globalMsg);
+                                            }
+
+                                            return 1;
+                                        })
                                 )
                         )
 
@@ -689,8 +987,89 @@ public class commands {
                                 )
                         )
 
+                        .then(Commands.literal("balance")
+                                .then(Commands.argument("playerName", StringArgumentType.word())
+                                        .suggests((context, builder) -> {
+                                            context.getSource().getServer().getPlayerList().getPlayers().forEach(player -> builder.suggest(player.getGameProfile().name()));
+                                            return builder.buildFuture();
+                                        })
+                                        .executes(context -> {
+                                            ServerPlayer player = context.getSource().getPlayer();
+                                            assert player != null;
+
+                                            String targetName = StringArgumentType.getString(context, "playerName");
+                                            ServerPlayer targetPlayer = context.getSource().getServer()
+                                                    .getPlayerList()
+                                                    .getPlayerByName(targetName);
+
+                                            if (targetPlayer == null) {
+                                                context.getSource().sendFailure(Component.literal("Player not found or not online!"));
+                                                return 0;
+                                            }
+
+                                            return displayBalance(context.getSource(), targetPlayer);
+                                        })
+                                )
+                                .executes(context -> {
+                                    ServerPlayer player = context.getSource().getPlayer();
+                                    assert player != null;
+                                    return displayBalance(context.getSource(), player);
+                                })
+                        )
+
         ));
 
         LOGGER.info("Commands Registered!");
+    }
+
+    private static int displayBalance(CommandSourceStack source, ServerPlayer player) {
+        String playerUuid = player.getUUID().toString();
+        List<String> currencies = datManager.get().getPlayerCurrencies(playerUuid);
+
+        MutableComponent message = Component.literal("ยง6=== Balance for ")
+                .append(Component.literal(player.getGameProfile().name()).withStyle(ChatFormatting.YELLOW))
+                .append(Component.literal(" ===\n").withStyle(ChatFormatting.GOLD));
+
+        if (currencies.isEmpty()) {
+            message.append(Component.literal("No currencies found.").withStyle(ChatFormatting.GRAY));
+        } else {
+            for (String currencyName : currencies) {
+                long balance = datManager.get().getPlayerCurrencyBalance(playerUuid, currencyName);
+                String currencyTag = findCurrencyTag(currencyName);
+
+                Component currencyEntry = Component.literal("โ�ข ")
+                        .withStyle(ChatFormatting.YELLOW)
+                        .append(Component.literal(currencyName).withStyle(ChatFormatting.YELLOW))
+                        .append(Component.literal(": "))
+                        .append(Component.literal(String.valueOf(balance)).withStyle(ChatFormatting.GREEN))
+                        .append(Component.literal(" ["))
+                        .append(Component.literal(currencyTag).withStyle(ChatFormatting.GOLD))
+                        .append(Component.literal("]"))
+                        .append(Component.literal("\n"))
+                        .withStyle(ChatFormatting.YELLOW);
+
+                message.append(currencyEntry);
+            }
+        }
+
+        source.sendSuccess(() -> message, false);
+        return 1;
+    }
+
+    private static String findCurrencyTag(String currencyName) {
+        CompoundTag teams = datManager.get().getData().getCompoundOrEmpty("teams");
+        for (String teamName : teams.keySet()) {
+            CompoundTag teamData = teams.getCompoundOrEmpty(teamName);
+            String name = teamData.getString("currencyName").orElse("");
+            if (name.equalsIgnoreCase(currencyName)) {
+                ListTag currencyTag = teamData.getListOrEmpty("currencyTag");
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < currencyTag.size(); i++) {
+                    sb.append(currencyTag.getString(i).orElse(""));
+                }
+                return sb.toString();
+            }
+        }
+        return "?";
     }
 }

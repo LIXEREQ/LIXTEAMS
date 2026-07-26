@@ -41,9 +41,12 @@ public class commands {
                                         .then(Commands.argument("tag", StringArgumentType.string()).executes(context -> {
                                                     String teamName = StringArgumentType.getString(context, "name");
                                                     String teamTag = StringArgumentType.getString(context, "tag");
-                                                    ServerPlayer player = context.getSource().getPlayer();
-                                                    assert player != null;
-                                                    UUID ownerUuid = player.getUUID();
+                                                     ServerPlayer player = context.getSource().getPlayer();
+                                                     if (player == null) {
+                                                         context.getSource().sendFailure(Component.literal("Player not found!"));
+                                                         return 0;
+                                                     }
+                                                     UUID ownerUuid = player.getUUID();
 
                                                     CommandSourceStack source = context.getSource();
                                                     MinecraftServer server = source.getServer();
@@ -62,16 +65,20 @@ public class commands {
                                 )
                         )
 
-                        .then(Commands.literal("disband")
-                                .executes(context -> {
-                                    ServerPlayer player = context.getSource().getPlayer();
-                                    assert player != null;
-                                    UUID ownerUuid = player.getUUID();
-                                    try {
-                                        datManager.get().removeTeam(ownerUuid);
-                                    } catch (IOException e) {
-                                        throw new RuntimeException(e);
-                                    }
+                                        .then(Commands.literal("disband")
+                                                .executes(context -> {
+                                                    ServerPlayer player = context.getSource().getPlayer();
+                                                    if (player == null) {
+                                                        context.getSource().sendFailure(Component.literal("Player not found!"));
+                                                        return 0;
+                                                    }
+                                                    UUID ownerUuid = player.getUUID();
+                                                    try {
+                                                        datManager.get().removeTeam(ownerUuid);
+                                                    } catch (IOException e) {
+                                                        context.getSource().sendFailure(Component.literal("Failed to disband team: " + e.getMessage()));
+                                                        return 0;
+                                                    }
 
                                     CommandSourceStack source = context.getSource();
                                     MinecraftServer server = source.getServer();

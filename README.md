@@ -30,6 +30,9 @@
 - `/lixteams set <teamName|teamTag|teamColor> <value>` Chose a value to change and set a name, tag or color **(Team Owner Command)**
 - `/lixteams kick <playerName>` Kick a player from the team **(Team Owner Command)**
 - `/lixteams tm` Toggle team chat
+- `/lixteams createCurrency <currencyName> <currencyTag>` Create a currency **(Team Owner Command)**
+- `/lixteams generateCurrency <amount>` Generate currency into the account **(Team Owner Command)**
+- `/lixteams balance <playerName>` See the account balance of a player
 
 # Admin Commands
 

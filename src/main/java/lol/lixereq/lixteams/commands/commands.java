@@ -910,7 +910,6 @@ public class commands {
 
                                             context.getSource().sendSuccess(() -> generatedMsg, false);
 
-                                            // Broadcast global message
                                             MinecraftServer server = context.getSource().getServer();
                                             String playerName = player.getGameProfile().name();
                                             Component globalMsg = Component.literal("โ ")
@@ -1033,7 +1032,7 @@ public class commands {
         String playerUuid = player.getUUID().toString();
         List<String> currencies = datManager.get().getPlayerCurrencies(playerUuid);
 
-        MutableComponent message = Component.literal("ยง6=== Balance for ")
+        MutableComponent message = Component.literal("Balance for ")
                 .append(Component.literal(player.getGameProfile().name()).withStyle(ChatFormatting.YELLOW))
                 .append(Component.literal(" ===\n").withStyle(ChatFormatting.GOLD));
 
@@ -1044,7 +1043,7 @@ public class commands {
                 long balance = datManager.get().getPlayerCurrencyBalance(playerUuid, currencyName);
                 String currencyTag = findCurrencyTag(currencyName);
 
-                Component currencyEntry = Component.literal("โ�ข ")
+                Component currencyEntry = Component.literal("")
                         .withStyle(ChatFormatting.YELLOW)
                         .append(Component.literal(currencyName).withStyle(ChatFormatting.YELLOW))
                         .append(Component.literal(": "))

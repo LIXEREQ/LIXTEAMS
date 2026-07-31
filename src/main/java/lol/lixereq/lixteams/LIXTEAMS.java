@@ -3,6 +3,7 @@ package lol.lixereq.lixteams;
 import lol.lixereq.lixteams.commands.commands;
 import lol.lixereq.lixteams.commands.adminCommands;
 import lol.lixereq.lixteams.data.datConfig;
+import lol.lixereq.lixteams.data.datManager;
 import lol.lixereq.lixteams.teamUtils.teamUtils;
 import net.fabricmc.api.ModInitializer;
 
@@ -41,8 +42,12 @@ public class LIXTEAMS implements ModInitializer {
         adminCommands.registerCommands();
         teamUtils.register();
 
+        // Process expired pending currencies on server start (crash recovery)
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server)
-                -> runDelayed(server, () -> teamUtils.rebuildTeams(server), 3));
+                -> runDelayed(server, () -> {
+                    teamUtils.rebuildTeams(server);
+                    datManager.get().processExpiredPendingCurrencies();
+                }, 3));
 
         LOGGER.info("Mod Successfully Initialized!");
     }

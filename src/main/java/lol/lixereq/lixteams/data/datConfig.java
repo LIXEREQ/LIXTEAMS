@@ -50,6 +50,9 @@ public class datConfig {
 
         settings.putInt("currencyDelay", 1800);
 
+        CompoundTag pendingCurrencies = new CompoundTag();
+        root.put("pendingCurrencies", pendingCurrencies);
+
         CompoundTag playerCurrencies = new CompoundTag();
         root.put("playerCurrencies", playerCurrencies);
 

@@ -19,6 +19,7 @@ import net.minecraft.server.level.ServerPlayer;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
@@ -734,7 +735,6 @@ public class datManager {
 
             case "color" -> {
                 try {
-                    // Validate the color string
                     ChatFormatting.valueOf(value.toUpperCase());
                     foundTeam.putString("tagColor", value.toUpperCase());
                 } catch (Exception e) {
@@ -959,6 +959,148 @@ public class datManager {
 
     public boolean hasCurrencyBalance(String playerUuid, String currencyName) {
         return getPlayerCurrencyBalance(playerUuid, currencyName) > 0;
+    }
+
+    public CompoundTag getPendingCurrencies() {
+        return data.getCompoundOrEmpty("pendingCurrencies");
+    }
+
+    public void addPendingCurrency(String teamName, String playerUuid, String currencyName, long amount, long completionTimeSeconds) throws IOException {
+        CompoundTag pending = getPendingCurrencies();
+        String key = teamName + ":" + playerUuid;
+
+        CompoundTag entry = new CompoundTag();
+        entry.putString("teamName", teamName);
+        entry.putString("playerUuid", playerUuid);
+        entry.putString("currencyName", currencyName);
+        entry.putLong("amount", amount);
+        entry.putLong("completionTime", completionTimeSeconds);
+        pending.put(key, entry);
+
+        save();
+    }
+
+    public void removePendingCurrency(String teamName, String playerUuid) throws IOException {
+        CompoundTag pending = getPendingCurrencies();
+        String key = teamName + ":" + playerUuid;
+        pending.remove(key);
+        save();
+    }
+
+    public void activatePendingCurrency(String teamName, String playerUuid) throws IOException {
+        CompoundTag pending = getPendingCurrencies();
+        String key = teamName + ":" + playerUuid;
+
+        if (!pending.contains(key)) {
+            return;
+        }
+
+        CompoundTag entry = pending.getCompound(key).orElse(new CompoundTag());
+        String currencyName = entry.getString("currencyName").orElse("");
+        long amount = entry.getLong("amount").orElse(0L);
+
+        pending.remove(key);
+        save();
+
+        addPlayerCurrencyBalance(playerUuid, currencyName, amount);
+        LOGGER.info("Activated pending currency: " + amount + " " + currencyName + " for player " + playerUuid);
+    }
+
+    public long getPendingCompletionTime(String teamName, String playerUuid) {
+        CompoundTag pending = getPendingCurrencies();
+        String key = teamName + ":" + playerUuid;
+
+        if (!pending.contains(key)) {
+            return 0;
+        }
+
+        CompoundTag entry = pending.getCompound(key).orElse(new CompoundTag());
+        return entry.getLong("completionTime").orElse(0L);
+    }
+
+    public boolean hasPendingCurrency(String teamName, String playerUuid) {
+        CompoundTag pending = getPendingCurrencies();
+        String key = teamName + ":" + playerUuid;
+        return pending.contains(key);
+    }
+
+    public long getPendingAmount(String teamName, String playerUuid) {
+        CompoundTag pending = getPendingCurrencies();
+        String key = teamName + ":" + playerUuid;
+
+        if (!pending.contains(key)) {
+            return 0L;
+        }
+
+        CompoundTag entry = pending.getCompound(key).orElse(new CompoundTag());
+        return entry.getLong("amount").orElse(0L);
+    }
+
+    public void cancelPendingCurrency(String teamName, String playerUuid) throws IOException {
+        CompoundTag pending = getPendingCurrencies();
+        String key = teamName + ":" + playerUuid;
+
+        if (!pending.contains(key)) {
+            return;
+        }
+
+        pending.remove(key);
+        save();
+    }
+
+    public long getTeamDelaySeconds(String teamName) {
+        CompoundTag teams = data.getCompoundOrEmpty("teams");
+        CompoundTag teamData = teams.getCompoundOrEmpty(teamName);
+
+        if (teamData.contains("currencyDelay")) {
+            return teamData.getLong("currencyDelay").orElse(0L);
+        }
+
+        return (long) data.getCompoundOrEmpty("settings").getIntOr("currencyDelay", 1800);
+    }
+
+    public void setTeamDelaySeconds(String teamName, long delaySeconds) throws IOException {
+        CompoundTag teams = data.getCompoundOrEmpty("teams");
+        CompoundTag teamData = teams.getCompoundOrEmpty(teamName);
+        teamData.putLong("currencyDelay", delaySeconds);
+        save();
+    }
+
+    public void processExpiredPendingCurrencies() {
+        CompoundTag pending = getPendingCurrencies();
+        long currentTime = System.currentTimeMillis() / 1000;
+        List<String> toActivate = new ArrayList<>();
+
+        for (String key : pending.keySet()) {
+            CompoundTag entry = pending.getCompound(key).orElse(new CompoundTag());
+            long completionTime = entry.getLong("completionTime").orElse(Long.MAX_VALUE);
+            if (currentTime >= completionTime) {
+                toActivate.add(key);
+            }
+        }
+
+        for (String key : toActivate) {
+            CompoundTag entry = pending.getCompound(key).orElse(new CompoundTag());
+            String teamName = entry.getString("teamName").orElse("");
+            String playerUuid = entry.getString("playerUuid").orElse("");
+            String currencyName = entry.getString("currencyName").orElse("");
+            long amount = entry.getLong("amount").orElse(0L);
+
+            pending.remove(key);
+
+            try {
+                addPlayerCurrencyBalance(playerUuid, currencyName, amount);
+                LOGGER.info("Activated pending currency: " + amount + " " + currencyName + " for player " + playerUuid);
+            } catch (IOException e) {
+                LOGGER.error("Failed to activate pending currency for player " + playerUuid + ": " + e.getMessage());
+            }
+        }
+
+        try {
+            save();
+        } catch (IOException e) {
+            LOGGER.error("Failed to save pending currencies after processing: " + e.getMessage());
+        }
     }
 
     public static CompoundTag createTeam(String teamTag, UUID ownerUUID) {

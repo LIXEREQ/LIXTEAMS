@@ -887,34 +887,107 @@ public class commands {
 
                                             int amount = IntegerArgumentType.getInteger(context, "amount");
 
+                                            if (datManager.get().hasPendingCurrency(teamName, player.getUUID().toString())) {
+                                                long completionTime = datManager.get().getPendingCompletionTime(teamName, player.getUUID().toString());
+                                                long remainingSeconds = completionTime - (System.currentTimeMillis() / 1000);
+                                                long remainingMinutes = remainingSeconds / 60;
+                                                long remainingHours = remainingMinutes / 60;
+
+                                                if (remainingHours > 0) {
+                                                    context.getSource().sendFailure(
+                                                            Component.literal("Your currency is still being generated! " + remainingHours + "h " + remainingMinutes + "m remaining.")
+                                                                    .withStyle(ChatFormatting.RED)
+                                                    );
+                                                } else {
+                                                    context.getSource().sendFailure(
+                                                            Component.literal("Your currency is still being generated! " + remainingMinutes + "m remaining.")
+                                                                    .withStyle(ChatFormatting.RED)
+                                                    );
+                                                }
+                                                return 0;
+                                            }
+
+                                            long delaySeconds = datManager.get().getTeamDelaySeconds(teamName);
+
+                                            if (delaySeconds == 0) {
+                                                try {
+                                                    datManager.get().addPlayerCurrencyBalance(player.getUUID().toString(), currencyName, amount);
+                                                } catch (IOException e) {
+                                                    context.getSource().sendFailure(
+                                                            Component.literal("Failed to generate currency.")
+                                                    );
+                                                    e.printStackTrace();
+                                                    return 0;
+                                                }
+
+                                                String currencyTagStr = datManager.get().getTeamCurrencyTagString(teamName);
+                                                Component generatedMsg = Component.literal("Generated ")
+                                                        .withStyle(ChatFormatting.YELLOW)
+                                                        .append(Component.literal(String.valueOf(amount)).withStyle(ChatFormatting.YELLOW))
+                                                        .append(Component.literal(" "))
+                                                        .append(Component.literal(currencyName).withStyle(ChatFormatting.YELLOW))
+                                                        .append(Component.literal(" ["))
+                                                        .append(Component.literal(currencyTagStr).withStyle(ChatFormatting.GOLD))
+                                                        .append(Component.literal("]"))
+                                                        .append(Component.literal(" for yourself!"));
+
+                                                context.getSource().sendSuccess(() -> generatedMsg, false);
+
+                                                MinecraftServer server = context.getSource().getServer();
+                                                String playerName = player.getGameProfile().name();
+                                                Component globalMsg = Component.literal("โ ")
+                                                        .append(Component.literal(playerName).withStyle(ChatFormatting.GREEN))
+                                                        .append(Component.literal(" generated "))
+                                                        .append(Component.literal(String.valueOf(amount)).withStyle(ChatFormatting.YELLOW))
+                                                        .append(Component.literal(" "))
+                                                        .append(Component.literal(currencyName).withStyle(ChatFormatting.YELLOW))
+                                                        .append(Component.literal(" ["))
+                                                        .append(Component.literal(currencyTagStr).withStyle(ChatFormatting.GOLD))
+                                                        .append(Component.literal("]"))
+                                                        .append(Component.literal(" for team "))
+                                                        .append(Component.literal(teamName).withStyle(ChatFormatting.WHITE))
+                                                        .append(Component.literal("!"));
+
+                                                for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+                                                    p.sendSystemMessage(globalMsg);
+                                                }
+
+                                                return 1;
+                                            }
+
+                                            long completionTime = System.currentTimeMillis() / 1000 + delaySeconds;
                                             try {
-                                                datManager.get().addPlayerCurrencyBalance(player.getUUID().toString(), currencyName, amount);
+                                                datManager.get().addPendingCurrency(teamName, player.getUUID().toString(), currencyName, amount, completionTime);
                                             } catch (IOException e) {
                                                 context.getSource().sendFailure(
-                                                        Component.literal("Failed to generate currency.")
+                                                        Component.literal("Failed to schedule currency generation.")
                                                 );
                                                 e.printStackTrace();
                                                 return 0;
                                             }
 
                                             String currencyTagStr = datManager.get().getTeamCurrencyTagString(teamName);
-                                            Component generatedMsg = Component.literal("Generated ")
-                                                    .withStyle(ChatFormatting.YELLOW)
+                                            long remainingMinutes = delaySeconds / 60;
+                                            long remainingHours = remainingMinutes / 60;
+
+                                            Component generatedMsg = Component.literal("Currency is being generated! ")
                                                     .append(Component.literal(String.valueOf(amount)).withStyle(ChatFormatting.YELLOW))
                                                     .append(Component.literal(" "))
                                                     .append(Component.literal(currencyName).withStyle(ChatFormatting.YELLOW))
                                                     .append(Component.literal(" ["))
                                                     .append(Component.literal(currencyTagStr).withStyle(ChatFormatting.GOLD))
                                                     .append(Component.literal("]"))
-                                                    .append(Component.literal(" for yourself!"));
+                                                    .append(Component.literal(" in "))
+                                                    .append(Component.literal(remainingHours > 0 ? remainingHours + "h " + remainingMinutes % 60 + "m" : remainingMinutes + "m").withStyle(ChatFormatting.YELLOW))
+                                                    .append(Component.literal("!"));
 
                                             context.getSource().sendSuccess(() -> generatedMsg, false);
 
                                             MinecraftServer server = context.getSource().getServer();
                                             String playerName = player.getGameProfile().name();
-                                            Component globalMsg = Component.literal("โ ")
+                                            Component globalMsg = Component.literal("")
                                                     .append(Component.literal(playerName).withStyle(ChatFormatting.GREEN))
-                                                    .append(Component.literal(" generated "))
+                                                    .append(Component.literal(" is generating "))
                                                     .append(Component.literal(String.valueOf(amount)).withStyle(ChatFormatting.YELLOW))
                                                     .append(Component.literal(" "))
                                                     .append(Component.literal(currencyName).withStyle(ChatFormatting.YELLOW))
@@ -924,10 +997,18 @@ public class commands {
                                                     .append(Component.literal(" for team "))
                                                     .append(Component.literal(teamName).withStyle(ChatFormatting.WHITE))
                                                     .append(Component.literal("!"));
+                                            String currencyGenerationServerMessage = String.format(
+                                                    "%s is generating %s %s [%s]",
+                                                    playerName,
+                                                    amount,
+                                                    currencyName,
+                                                    currencyTagStr
+                                                    );
 
                                             for (ServerPlayer p : server.getPlayerList().getPlayers()) {
                                                 p.sendSystemMessage(globalMsg);
                                             }
+                                            LOGGER.info(currencyGenerationServerMessage);
 
                                             return 1;
                                         })
@@ -1034,7 +1115,7 @@ public class commands {
 
         MutableComponent message = Component.literal("Balance for ")
                 .append(Component.literal(player.getGameProfile().name()).withStyle(ChatFormatting.YELLOW))
-                .append(Component.literal(" ===\n").withStyle(ChatFormatting.GOLD));
+                .append(Component.literal("\n").withStyle(ChatFormatting.GOLD));
 
         if (currencies.isEmpty()) {
             message.append(Component.literal("No currencies found.").withStyle(ChatFormatting.GRAY));

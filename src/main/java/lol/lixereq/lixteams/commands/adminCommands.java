@@ -332,54 +332,81 @@ public class adminCommands {
 
                                             return 1;
                                         })
-                                        .then(Commands.argument("setting", StringArgumentType.string())
-                                                .suggests((context, builder) -> {
-                                                    String teamName = StringArgumentType.getString(context, "teamName");
-                                                    CompoundTag teams = datManager.get().getData().getCompoundOrEmpty("teams");
-                                                    CompoundTag teamData = teams.getCompoundOrEmpty(teamName);
+                                                .then(Commands.argument("setting", StringArgumentType.string())
+                                                        .suggests((context, builder) -> {
+                                                            String teamName = StringArgumentType.getString(context, "teamName");
+                                                            CompoundTag teams = datManager.get().getData().getCompoundOrEmpty("teams");
+                                                            CompoundTag teamData = teams.getCompoundOrEmpty(teamName);
 
-                                                    CompoundTag settings = teamData.getCompoundOrEmpty("settings");
-                                                    for (String key : settings.keySet()) builder.suggest(key);
+                                                            CompoundTag settings = teamData.getCompoundOrEmpty("settings");
+                                                            for (String key : settings.keySet()) builder.suggest(key);
+                                                            builder.suggest("currencyDelay");
 
-                                                    return builder.buildFuture();
-                                                })
-                                                .executes(context -> {
-                                                    String teamName = StringArgumentType.getString(context, "teamName");
-                                                    String setting = StringArgumentType.getString(context, "setting");
-                                                    ServerPlayer player = context.getSource().getPlayer();
-                                                    assert player != null;
-
-                                                    try {
-                                                        datManager.get().handleSettingsAdmin(player.createCommandSourceStack(), teamName, setting, null);
-                                                    } catch (IOException | CommandSyntaxException e) {
-                                                        throw new RuntimeException(e);
-                                                    }
-
-                                                    return 1;
-                                                })
-                                                .then(Commands.argument("value", BoolArgumentType.bool())
+                                                            return builder.buildFuture();
+                                                        })
                                                         .executes(context -> {
                                                             String teamName = StringArgumentType.getString(context, "teamName");
                                                             String setting = StringArgumentType.getString(context, "setting");
-                                                            boolean value = BoolArgumentType.getBool(context, "value");
                                                             ServerPlayer player = context.getSource().getPlayer();
                                                             assert player != null;
 
+                                                            if ("currencyDelay".equals(setting)) {
+                                                                long delay = datManager.get().getTeamDelaySeconds(teamName);
+                                                                context.getSource().sendSuccess(
+                                                                        () -> Component.literal("Current currency delay for '" + teamName + "': " + delay + " seconds"),
+                                                                        false
+                                                                );
+                                                                return 1;
+                                                            }
+
                                                             try {
-                                                                datManager.get().handleSettingsAdmin(player.createCommandSourceStack(), teamName, setting, value);
+                                                                datManager.get().handleSettingsAdmin(player.createCommandSourceStack(), teamName, setting, null);
                                                             } catch (IOException | CommandSyntaxException e) {
                                                                 throw new RuntimeException(e);
                                                             }
 
-                                                            teamUtils.rebuildTeams(context.getSource().getServer());
-
-                                                            context.getSource().sendSuccess(
-                                                                    () -> Component.literal("Admin set '" + setting + "' for team '" + teamName + "' to " + value),
-                                                                    false
-                                                            );
                                                             return 1;
                                                         })
-                                                )
+                                                        .then(Commands.argument("value", IntegerArgumentType.integer(0))
+                                                                .executes(context -> {
+                                                                    String teamName = StringArgumentType.getString(context, "teamName");
+                                                                    String setting = StringArgumentType.getString(context, "setting");
+                                                                    int value = IntegerArgumentType.getInteger(context, "value");
+                                                                    ServerPlayer player = context.getSource().getPlayer();
+                                                                    assert player != null;
+
+                                                                    if ("currencyDelay".equals(setting)) {
+                                                                        long delaySeconds = value * 60L;
+                                                                        try {
+                                                                            datManager.get().setTeamDelaySeconds(teamName, delaySeconds);
+                                                                        } catch (IOException e) {
+                                                                            context.getSource().sendFailure(Component.literal("Failed to save currency delay."));
+                                                                            e.printStackTrace();
+                                                                            return 0;
+                                                                        }
+
+                                                                        context.getSource().sendSuccess(
+                                                                                () -> Component.literal("Currency delay for team '" + teamName + "' set to " + value + " minute(s) (" + delaySeconds + " seconds)."),
+                                                                                false
+                                                                        );
+                                                                        return 1;
+                                                                    }
+
+                                                                    try {
+                                                                        datManager.get().handleSettingsAdmin(player.createCommandSourceStack(), teamName, setting, value != 0);
+                                                                    } catch (IOException | CommandSyntaxException e) {
+                                                                        throw new RuntimeException(e);
+                                                                    }
+
+                                                                    teamUtils.rebuildTeams(context.getSource().getServer());
+
+                                                                    context.getSource().sendSuccess(
+                                                                            () -> Component.literal("Admin set '" + setting + "' for team '" + teamName + "' to " + (value != 0)),
+                                                                            false
+                                                                    );
+                                                                    return 1;
+                                                                })
+                                                        )
                                         )
                                 )
                         )
@@ -445,6 +472,106 @@ public class adminCommands {
                                                     return 1;
                                                 })
                                         )
+                                )
+                        )
+
+                        .then(Commands.literal("activatePendingCurrency")
+                                .then(Commands.argument("playerName", StringArgumentType.word())
+                                        .suggests((context, builder) -> {
+                                            context.getSource().getServer().getPlayerList().getPlayers().forEach(p -> builder.suggest(p.getGameProfile().name()));
+                                            return builder.buildFuture();
+                                        })
+                                        .executes(context -> {
+                                            ServerPlayer player = context.getSource().getPlayer();
+                                            assert player != null;
+
+                                            String targetName = StringArgumentType.getString(context, "playerName");
+                                            ServerPlayer targetPlayer = context.getSource().getServer()
+                                                    .getPlayerList()
+                                                    .getPlayerByName(targetName);
+
+                                            if (targetPlayer == null) {
+                                                context.getSource().sendFailure(Component.literal("Player not found or not online!"));
+                                                return 0;
+                                            }
+
+                                            String teamName = datManager.get().getTeam(targetPlayer.getUUID());
+                                            if (teamName == null) {
+                                                context.getSource().sendFailure(Component.literal("This player is not in a team!"));
+                                                return 0;
+                                            }
+
+                                            if (!datManager.get().hasPendingCurrency(teamName, targetPlayer.getUUID().toString())) {
+                                                context.getSource().sendFailure(Component.literal("This player has no pending currency!"));
+                                                return 0;
+                                            }
+
+                                            try {
+                                                datManager.get().activatePendingCurrency(teamName, targetPlayer.getUUID().toString());
+                                            } catch (IOException e) {
+                                                context.getSource().sendFailure(Component.literal("Failed to activate pending currency."));
+                                                e.printStackTrace();
+                                                return 0;
+                                            }
+
+                                            String currencyName = datManager.get().getTeamCurrencyName(teamName);
+                                            long amount = datManager.get().getPendingAmount(teamName, targetPlayer.getUUID().toString());
+                                            String currencyTagStr = datManager.get().getTeamCurrencyTagString(teamName);
+
+                                            context.getSource().sendSuccess(
+                                                    () -> Component.literal("Activated pending currency: " + amount + " " + currencyName + " [" + currencyTagStr + "] for " + targetName),
+                                                    false
+                                            );
+                                            return 1;
+                                        })
+                                )
+                        )
+
+                        .then(Commands.literal("cancelPendingCurrency")
+                                .then(Commands.argument("playerName", StringArgumentType.word())
+                                        .suggests((context, builder) -> {
+                                            context.getSource().getServer().getPlayerList().getPlayers().forEach(p -> builder.suggest(p.getGameProfile().name()));
+                                            return builder.buildFuture();
+                                        })
+                                        .executes(context -> {
+                                            ServerPlayer player = context.getSource().getPlayer();
+                                            assert player != null;
+
+                                            String targetName = StringArgumentType.getString(context, "playerName");
+                                            ServerPlayer targetPlayer = context.getSource().getServer()
+                                                    .getPlayerList()
+                                                    .getPlayerByName(targetName);
+
+                                            if (targetPlayer == null) {
+                                                context.getSource().sendFailure(Component.literal("Player not found or not online!"));
+                                                return 0;
+                                            }
+
+                                            String teamName = datManager.get().getTeam(targetPlayer.getUUID());
+                                            if (teamName == null) {
+                                                context.getSource().sendFailure(Component.literal("This player is not in a team!"));
+                                                return 0;
+                                            }
+
+                                            if (!datManager.get().hasPendingCurrency(teamName, targetPlayer.getUUID().toString())) {
+                                                context.getSource().sendFailure(Component.literal("This player has no pending currency!"));
+                                                return 0;
+                                            }
+
+                                            try {
+                                                datManager.get().cancelPendingCurrency(teamName, targetPlayer.getUUID().toString());
+                                            } catch (IOException e) {
+                                                context.getSource().sendFailure(Component.literal("Failed to cancel pending currency."));
+                                                e.printStackTrace();
+                                                return 0;
+                                            }
+
+                                            context.getSource().sendSuccess(
+                                                    () -> Component.literal("Cancelled pending currency for " + targetName),
+                                                    false
+                                            );
+                                            return 1;
+                                        })
                                 )
                         )
 

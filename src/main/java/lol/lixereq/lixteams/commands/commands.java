@@ -461,22 +461,22 @@ public class commands {
 
                                     final MutableComponent[] infoMessage = new MutableComponent[1];
                                     if (hasCurrency) {
-                                        infoMessage[0] = Component.literal("ยง6=== Team Info ===\n")
-                                                .append(Component.literal("ยงeTeam Name: ยงf" + teamName + "\n"))
-                                                .append(Component.literal("ยงeTeam Tag: ยงf" + teamTag + "\n"))
-                                                .append(Component.literal("ยงeOwner: ยงf" + ownerName + "\n"))
-                                                .append(Component.literal("ยงeMembers: ยงf" + (membersText.length() > 0 ? membersText : "None")))
-                                                .append(Component.literal("\nยงeCurrency: ยงf"))
+                                        infoMessage[0] = Component.literal("Team Info\n")
+                                                .append(Component.literal("Team Name: " + teamName + "\n"))
+                                                .append(Component.literal("Team Tag: " + teamTag + "\n"))
+                                                .append(Component.literal("Owner: " + ownerName + "\n"))
+                                                .append(Component.literal("Members: " + (membersText.length() > 0 ? membersText : "None")))
+                                                .append(Component.literal("\nCurrency: "))
                                                 .append(Component.literal(currencyName).withStyle(ChatFormatting.YELLOW))
                                                 .append(Component.literal(" ["))
                                                 .append(Component.literal(currencyTagBuilder.toString()).withStyle(ChatFormatting.GOLD))
                                                 .append(Component.literal("]"));
                                     } else {
-                                        infoMessage[0] = Component.literal("ยง6=== Team Info ===\n")
-                                                .append(Component.literal("ยงeTeam Name: ยงf" + teamName + "\n"))
-                                                .append(Component.literal("ยงeTeam Tag: ยงf" + teamTag + "\n"))
-                                                .append(Component.literal("ยงeOwner: ยงf" + ownerName + "\n"))
-                                                .append(Component.literal("ยงeMembers: ยงf" + (membersText.length() > 0 ? membersText : "None")));
+                                        infoMessage[0] = Component.literal("Team Info\n")
+                                                .append(Component.literal("Team Name: " + teamName + "\n"))
+                                                .append(Component.literal("Team Tag: " + teamTag + "\n"))
+                                                .append(Component.literal("Owner: " + ownerName + "\n"))
+                                                .append(Component.literal("Members: " + (membersText.length() > 0 ? membersText : "None")));
                                     }
 
                                     context.getSource().sendSuccess(() -> infoMessage[0], false);
@@ -762,7 +762,7 @@ public class commands {
                         .then(Commands.literal("listCurrencies")
                                 .executes(context -> {
                                     CompoundTag teams = datManager.get().getData().getCompoundOrEmpty("teams");
-                                    MutableComponent message = Component.literal("ยง6=== Available Currencies ===\n").withStyle(ChatFormatting.GOLD);
+                                    MutableComponent message = Component.literal("Available Currencies\n").withStyle(ChatFormatting.GOLD);
 
                                     boolean hasCurrencies = false;
                                     for (String teamName : teams.keySet()) {
@@ -776,7 +776,7 @@ public class commands {
                                             for (int i = 0; i < currencyTag.size(); i++) {
                                                 tagBuilder.append(currencyTag.getString(i).orElse(""));
                                             }
-                                            Component currencyEntry = Component.literal("โ�ข ")
+                                            Component currencyEntry = Component.literal("")
                                                     .withStyle(ChatFormatting.YELLOW)
                                                     .append(Component.literal(currencyName.isEmpty() ? "(unnamed)" : currencyName).withStyle(ChatFormatting.YELLOW))
                                                     .append(Component.literal(" [")).withStyle(ChatFormatting.YELLOW)
@@ -935,7 +935,7 @@ public class commands {
 
                                                 MinecraftServer server = context.getSource().getServer();
                                                 String playerName = player.getGameProfile().name();
-                                                Component globalMsg = Component.literal("โ ")
+                                                Component globalMsg = Component.literal("")
                                                         .append(Component.literal(playerName).withStyle(ChatFormatting.GREEN))
                                                         .append(Component.literal(" generated "))
                                                         .append(Component.literal(String.valueOf(amount)).withStyle(ChatFormatting.YELLOW))

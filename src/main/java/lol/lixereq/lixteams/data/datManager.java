@@ -1048,6 +1048,36 @@ public class datManager {
         save();
     }
 
+    public String getTeamCurrencyTagStringForCurrency(String currencyName) {
+        CompoundTag teams = data.getCompoundOrEmpty("teams");
+        for (String teamName : teams.keySet()) {
+            CompoundTag teamData = teams.getCompoundOrEmpty(teamName);
+            String name = teamData.getString("currencyName").orElse("");
+            if (name.equalsIgnoreCase(currencyName)) {
+                ListTag currencyTag = teamData.getListOrEmpty("currencyTag");
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < currencyTag.size(); i++) {
+                    sb.append(currencyTag.getString(i).orElse(""));
+                }
+                return sb.toString();
+            }
+        }
+        return "";
+    }
+
+    public List<String> getAllCurrencyNames() {
+        CompoundTag teams = data.getCompoundOrEmpty("teams");
+        Set<String> currencies = new HashSet<>();
+        for (String teamName : teams.keySet()) {
+            CompoundTag teamData = teams.getCompoundOrEmpty(teamName);
+            String currencyName = teamData.getString("currencyName").orElse("");
+            if (!currencyName.isEmpty()) {
+                currencies.add(currencyName);
+            }
+        }
+        return new ArrayList<>(currencies);
+    }
+
     public long getTeamDelaySeconds(String teamName) {
         CompoundTag teams = data.getCompoundOrEmpty("teams");
         CompoundTag teamData = teams.getCompoundOrEmpty(teamName);

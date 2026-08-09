@@ -417,60 +417,55 @@ public class adminCommands {
                                             context.getSource().getServer().getPlayerList().getPlayers().forEach(player -> builder.suggest(player.getGameProfile().name()));
                                             return builder.buildFuture();
                                         })
-                                        .then(Commands.argument("amount", IntegerArgumentType.integer(1))
-                                                .executes(context -> {
-                                                    ServerPlayer player = context.getSource().getPlayer();
-                                                    assert player != null;
-
-                                                    String targetName = StringArgumentType.getString(context, "playerName");
-                                                    ServerPlayer targetPlayer = context.getSource().getServer()
-                                                            .getPlayerList()
-                                                            .getPlayerByName(targetName);
-
-                                                    if (targetPlayer == null) {
-                                                        context.getSource().sendFailure(Component.literal("Player not found or not online!"));
-                                                        return 0;
-                                                    }
-
-                                                    int amount = IntegerArgumentType.getInteger(context, "amount");
-                                                    String teamName = datManager.get().getTeam(targetPlayer.getUUID());
-
-                                                    if (teamName == null) {
-                                                        context.getSource().sendFailure(Component.literal("This player is not in a team!"));
-                                                        return 0;
-                                                    }
-
-                                                    String currencyName = datManager.get().getTeamCurrencyName(teamName);
-                                                    if (currencyName.isEmpty()) {
-                                                        context.getSource().sendFailure(Component.literal("This team does not have a currency!"));
-                                                        return 0;
-                                                    }
-
-                                                    try {
-                                                        datManager.get().addPlayerCurrencyBalance(targetPlayer.getUUID().toString(), currencyName, amount);
-                                                    } catch (IOException e) {
-                                                        context.getSource().sendFailure(Component.literal("Failed to add currency."));
-                                                        e.printStackTrace();
-                                                        return 0;
-                                                    }
-
-                                                    String currencyTagStr = datManager.get().getTeamCurrencyTagString(teamName);
-                                                    String targetNameStr = targetPlayer.getGameProfile().name();
-                                                    Component addedMsg = Component.literal("Added ")
-                                                            .withStyle(ChatFormatting.YELLOW)
-                                                            .append(Component.literal(String.valueOf(amount)).withStyle(ChatFormatting.YELLOW))
-                                                            .append(Component.literal(" "))
-                                                            .append(Component.literal(currencyName).withStyle(ChatFormatting.YELLOW))
-                                                            .append(Component.literal(" ["))
-                                                            .append(Component.literal(currencyTagStr).withStyle(ChatFormatting.GOLD))
-                                                            .append(Component.literal("]"))
-                                                            .append(Component.literal(" to "))
-                                                            .append(Component.literal(targetNameStr).withStyle(ChatFormatting.GREEN))
-                                                            .append(Component.literal("!"));
-
-                                                    context.getSource().sendSuccess(() -> addedMsg, false);
-                                                    return 1;
+                                        .then(Commands.argument("currencyName", StringArgumentType.string())
+                                                .suggests((context, builder) -> {
+                                                    datManager.get().getAllCurrencyNames().forEach(builder::suggest);
+                                                    return builder.buildFuture();
                                                 })
+                                                .then(Commands.argument("amount", IntegerArgumentType.integer(1))
+                                                        .executes(context -> {
+                                                            ServerPlayer player = context.getSource().getPlayer();
+                                                            assert player != null;
+
+                                                            String targetName = StringArgumentType.getString(context, "playerName");
+                                                            ServerPlayer targetPlayer = context.getSource().getServer()
+                                                                    .getPlayerList()
+                                                                    .getPlayerByName(targetName);
+
+                                                            if (targetPlayer == null) {
+                                                                context.getSource().sendFailure(Component.literal("Player not found or not online!"));
+                                                                return 0;
+                                                            }
+
+                                                            int amount = IntegerArgumentType.getInteger(context, "amount");
+                                                            String currencyName = StringArgumentType.getString(context, "currencyName");
+
+                                                            try {
+                                                                datManager.get().addPlayerCurrencyBalance(targetPlayer.getUUID().toString(), currencyName, amount);
+                                                            } catch (IOException e) {
+                                                                context.getSource().sendFailure(Component.literal("Failed to add currency."));
+                                                                e.printStackTrace();
+                                                                return 0;
+                                                            }
+
+                                                            String currencyTagStr = datManager.get().getTeamCurrencyTagStringForCurrency(currencyName);
+                                                            String targetNameStr = targetPlayer.getGameProfile().name();
+                                                            Component addedMsg = Component.literal("Added ")
+                                                                    .withStyle(ChatFormatting.YELLOW)
+                                                                    .append(Component.literal(String.valueOf(amount)).withStyle(ChatFormatting.YELLOW))
+                                                                    .append(Component.literal(" "))
+                                                                    .append(Component.literal(currencyName).withStyle(ChatFormatting.YELLOW))
+                                                                    .append(Component.literal(" ["))
+                                                                    .append(Component.literal(currencyTagStr).withStyle(ChatFormatting.GOLD))
+                                                                    .append(Component.literal("]"))
+                                                                    .append(Component.literal(" to "))
+                                                                    .append(Component.literal(targetNameStr).withStyle(ChatFormatting.GREEN))
+                                                                    .append(Component.literal("!"));
+
+                                                            context.getSource().sendSuccess(() -> addedMsg, false);
+                                                            return 1;
+                                                        })
+                                                )
                                         )
                                 )
                         )

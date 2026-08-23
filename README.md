@@ -32,6 +32,7 @@
 - `/lixteams tm` Toggle team chat
 - `/lixteams createCurrency <currencyName> <currencyTag>` Create a currency **(Team Owner Command)**
 - `/lixteams generateCurrency <amount>` Generate currency into the account **(Team Owner Command)**
+- `/lixteams withdraw <currencyName> <amount>` Withdraw currency to a paper item
 - `/lixteams balance <playerName>` See the account balance of a player
 
 # Admin Commands
@@ -41,6 +42,6 @@
 - `/lixteamsAdmin list` List all teams in the server
 - `/lixteamsAdmin reset [<Code>]` A command to wipe all mod data and reset it to default, after entering the command, a code thats valid for 60s will be given to confirm the reset
 - `/lixteamsAdmin blockSettings <teamName> <boolean>` Prevents the team's owner from changing their settings
-- `/lixteamsAdmin modifySettings <teamName> <settings> <boolean>` Modifies the settings of a team
+- `/lixteamsAdmin modifySettings <teamName> <settings> <boolean or value>` Modifies the settings of a team
 
 <hr>

@@ -32,7 +32,7 @@
 - `/lixteams tm` Toggle team chat
 - `/lixteams createCurrency <currencyName> <currencyTag>` Create a currency **(Team Owner Command)**
 - `/lixteams generateCurrency <amount>` Generate currency into the account **(Team Owner Command)**
-- `/lixteams withdraw <currencyName> <amount>` Withdraw currency to a paper item
+- `/lixteams withdraw <currencyName> <amount>` withdraw currency from the account to a paper item
 - `/lixteams balance <playerName>` See the account balance of a player
 
 # Admin Commands

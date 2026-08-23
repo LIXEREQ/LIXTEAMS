@@ -501,6 +501,9 @@ public class adminCommands {
                                                 return 0;
                                             }
 
+                                            String amount = String.valueOf(datManager.get().getPendingAmount(teamName, targetPlayer.getUUID().toString()));
+                                            String currencyName = datManager.get().getTeamCurrencyName(teamName);
+
                                             try {
                                                 datManager.get().activatePendingCurrency(teamName, targetPlayer.getUUID().toString());
                                             } catch (IOException e) {
@@ -509,10 +512,7 @@ public class adminCommands {
                                                 return 0;
                                             }
 
-                                            String currencyName = datManager.get().getTeamCurrencyName(teamName);
-                                            long amount = datManager.get().getPendingAmount(teamName, targetPlayer.getUUID().toString());
                                             String currencyTagStr = datManager.get().getTeamCurrencyTagString(teamName);
-
                                             context.getSource().sendSuccess(
                                                     () -> Component.literal("Activated pending currency: " + amount + " " + currencyName + " [" + currencyTagStr + "] for " + targetName),
                                                     false

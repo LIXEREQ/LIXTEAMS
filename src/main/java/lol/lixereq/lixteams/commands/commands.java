@@ -11,6 +11,7 @@ import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -19,6 +20,8 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.ItemStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1071,6 +1074,75 @@ public class commands {
 
                                             return 1;
                                         })
+                                )
+                        )
+
+                        .then(Commands.literal("withdraw")
+                                .then(Commands.argument("currency", StringArgumentType.string())
+                                        .suggests((context, builder) -> {
+                                            ServerPlayer player = context.getSource().getPlayer();
+                                            if (player != null) {
+                                                String playerUuid = player.getUUID().toString();
+                                                List<String> currencies = datManager.get().getPlayerCurrencies(playerUuid);
+                                                for (String currencyName : currencies) {
+                                                    builder.suggest(currencyName);
+                                                }
+                                            }
+                                            return builder.buildFuture();
+                                        })
+                                        .then(Commands.argument("amount", IntegerArgumentType.integer(1))
+                                                .executes(context -> {
+                                                    ServerPlayer player = context.getSource().getPlayer();
+                                                    assert player != null;
+
+                                                    String teamName = datManager.get().getTeam(player.getUUID());
+                                                    if (teamName == null) {
+                                                        context.getSource().sendFailure(
+                                                                Component.literal("You are not in a team!")
+                                                        );
+                                                        return 0;
+                                                    }
+
+                                                    String requestedCurrency = StringArgumentType.getString(context, "currency");
+                                                    int amount = IntegerArgumentType.getInteger(context, "amount");
+                                                    String playerUuid = player.getUUID().toString();
+
+                                                    long balance = datManager.get().getPlayerCurrencyBalance(playerUuid, requestedCurrency);
+                                                    if (balance < amount) {
+                                                        context.getSource().sendFailure(
+                                                                Component.literal("You do not have enough " + requestedCurrency + "! You have " + balance + ", but need " + amount + ".")
+                                                        );
+                                                        return 0;
+                                                    }
+
+                                                    try {
+                                                        datManager.get().subtractPlayerCurrencyBalance(playerUuid, requestedCurrency, amount);
+
+                                                        ItemStack withdrawalPaper = new ItemStack(Items.PAPER);
+                                                        withdrawalPaper.set(DataComponents.CUSTOM_NAME, Component.literal("[LIXTEAMS-WITHDRAW:" + requestedCurrency + ":" + amount + "]"));
+
+                                                        if (player.getInventory().add(withdrawalPaper)) {
+                                                            context.getSource().sendSuccess(
+                                                                    () -> Component.literal("Withdrew " + amount + " " + requestedCurrency + " to a currency withdrawal paper!"),
+                                                                    false
+                                                            );
+                                                        } else {
+                                                            context.getSource().sendFailure(
+                                                                    Component.literal("Your inventory is full! Cannot create withdrawal paper.")
+                                                            );
+                                                            datManager.get().addPlayerCurrencyBalance(playerUuid, requestedCurrency, amount);
+                                                        }
+                                                    } catch (IOException e) {
+                                                        context.getSource().sendFailure(
+                                                                Component.literal("Failed to process withdrawal: " + e.getMessage())
+                                                        );
+                                                        e.printStackTrace();
+                                                        return 0;
+                                                    }
+
+                                                    return 1;
+                                                })
+                                        )
                                 )
                         )
 

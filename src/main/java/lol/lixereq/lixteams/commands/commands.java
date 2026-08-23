@@ -1082,9 +1082,9 @@ public class commands {
                                         .suggests((context, builder) -> {
                                             ServerPlayer player = context.getSource().getPlayer();
                                             if (player != null) {
-                                                String teamName = datManager.get().getTeam(player.getUUID());
-                                                if (teamName != null && datManager.get().hasCurrency(teamName)) {
-                                                    String currencyName = datManager.get().getTeamCurrencyName(teamName);
+                                                String playerUuid = player.getUUID().toString();
+                                                List<String> currencies = datManager.get().getPlayerCurrencies(playerUuid);
+                                                for (String currencyName : currencies) {
                                                     builder.suggest(currencyName);
                                                 }
                                             }
@@ -1103,51 +1103,34 @@ public class commands {
                                                         return 0;
                                                     }
 
-                                                    CompoundTag teams = datManager.get().getData().getCompoundOrEmpty("teams");
-                                                    CompoundTag teamData = teams.getCompoundOrEmpty(teamName);
-                                                    String currencyName = teamData.getString("currencyName").orElse("");
-                                                    if (currencyName.isEmpty()) {
-                                                        context.getSource().sendFailure(
-                                                                Component.literal("Your team does not have a currency!")
-                                                        );
-                                                        return 0;
-                                                    }
-
                                                     String requestedCurrency = StringArgumentType.getString(context, "currency");
-                                                    if (!requestedCurrency.equalsIgnoreCase(currencyName)) {
-                                                        context.getSource().sendFailure(
-                                                                Component.literal("Your team does not have a currency named '" + requestedCurrency + "'!")
-                                                        );
-                                                        return 0;
-                                                    }
-
                                                     int amount = IntegerArgumentType.getInteger(context, "amount");
                                                     String playerUuid = player.getUUID().toString();
 
-                                                    long balance = datManager.get().getPlayerCurrencyBalance(playerUuid, currencyName);
+                                                    long balance = datManager.get().getPlayerCurrencyBalance(playerUuid, requestedCurrency);
                                                     if (balance < amount) {
                                                         context.getSource().sendFailure(
-                                                                Component.literal("You do not have enough " + currencyName + "! You have " + balance + ", but need " + amount + ".")
+                                                                Component.literal("You do not have enough " + requestedCurrency + "! You have " + balance + ", but need " + amount + ".")
                                                         );
                                                         return 0;
                                                     }
 
                                                     try {
-                                                        datManager.get().subtractPlayerCurrencyBalance(playerUuid, currencyName, amount);
+                                                        datManager.get().subtractPlayerCurrencyBalance(playerUuid, requestedCurrency, amount);
 
                                                         ItemStack withdrawalPaper = new ItemStack(Items.PAPER);
-                                                        withdrawalPaper.set(DataComponents.CUSTOM_NAME, Component.literal("[LIXTEAMS-WITHDRAW:" + currencyName + ":" + amount + "]"));
+                                                        withdrawalPaper.set(DataComponents.CUSTOM_NAME, Component.literal("[LIXTEAMS-WITHDRAW:" + requestedCurrency + ":" + amount + "]"));
 
                                                         if (player.getInventory().add(withdrawalPaper)) {
                                                             context.getSource().sendSuccess(
-                                                                    () -> Component.literal("Withdrew " + amount + " " + currencyName + " to a currency withdrawal paper!"),
+                                                                    () -> Component.literal("Withdrew " + amount + " " + requestedCurrency + " to a currency withdrawal paper!"),
                                                                     false
                                                             );
                                                         } else {
                                                             context.getSource().sendFailure(
                                                                     Component.literal("Your inventory is full! Cannot create withdrawal paper.")
                                                             );
-                                                            datManager.get().addPlayerCurrencyBalance(playerUuid, currencyName, amount);
+                                                            datManager.get().addPlayerCurrencyBalance(playerUuid, requestedCurrency, amount);
                                                         }
                                                     } catch (IOException e) {
                                                         context.getSource().sendFailure(

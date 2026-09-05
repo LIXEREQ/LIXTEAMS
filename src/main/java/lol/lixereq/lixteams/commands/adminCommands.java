@@ -120,8 +120,13 @@ public class adminCommands {
                         .then(Commands.literal("info")
                                 .then(Commands.argument("teamName", StringArgumentType.string())
                                         .suggests((context, builder) -> {
+                                            String prefix = builder.getRemaining();
                                             datManager.get().getData().getCompoundOrEmpty("teams").keySet()
-                                                    .forEach(builder::suggest);
+                                                    .forEach(team -> {
+                                                        if (team.toLowerCase().startsWith(prefix.toLowerCase())) {
+                                                            builder.suggest(team);
+                                                        }
+                                                    });
                                             return builder.buildFuture();
                                         })
                                         .executes(context -> {
@@ -238,10 +243,15 @@ public class adminCommands {
                         .then(Commands.literal("blockSettings")
                                 .then(Commands.argument("teamName", StringArgumentType.string())
                                         .suggests((context, builder) -> {
+                                            String prefix = builder.getRemaining();
                                             datManager.get().getData()
                                                     .getCompoundOrEmpty("teams")
                                                     .keySet()
-                                                    .forEach(builder::suggest);
+                                                    .forEach(team -> {
+                                                        if (team.toLowerCase().startsWith(prefix.toLowerCase())) {
+                                                            builder.suggest(team);
+                                                        }
+                                                    });
                                             return builder.buildFuture();
                                         })
                                         .then(Commands.argument("value", BoolArgumentType.bool())
@@ -315,8 +325,13 @@ public class adminCommands {
                         .then(Commands.literal("modifySettings")
                                 .then(Commands.argument("teamName", StringArgumentType.string())
                                         .suggests((context, builder) -> {
+                                            String prefix = builder.getRemaining();
                                             datManager.get().getData().getCompoundOrEmpty("teams").keySet()
-                                                    .forEach(builder::suggest);
+                                                    .forEach(team -> {
+                                                        if (team.toLowerCase().startsWith(prefix.toLowerCase())) {
+                                                            builder.suggest(team);
+                                                        }
+                                                    });
                                             return builder.buildFuture();
                                         })
                                         .executes(context -> {
@@ -337,10 +352,17 @@ public class adminCommands {
                                                             String teamName = StringArgumentType.getString(context, "teamName");
                                                             CompoundTag teams = datManager.get().getData().getCompoundOrEmpty("teams");
                                                             CompoundTag teamData = teams.getCompoundOrEmpty(teamName);
+                                                            String prefix = builder.getRemaining();
 
                                                             CompoundTag settings = teamData.getCompoundOrEmpty("settings");
-                                                            for (String key : settings.keySet()) builder.suggest(key);
-                                                            builder.suggest("currencyDelay");
+                                                            for (String key : settings.keySet()) {
+                                                                if (key.toLowerCase().startsWith(prefix.toLowerCase())) {
+                                                                    builder.suggest(key);
+                                                                }
+                                                            }
+                                                            if ("currencyDelay".toLowerCase().startsWith(prefix.toLowerCase())) {
+                                                                builder.suggest("currencyDelay");
+                                                            }
 
                                                             return builder.buildFuture();
                                                         })
@@ -414,12 +436,21 @@ public class adminCommands {
                         .then(Commands.literal("addCurrency")
                                 .then(Commands.argument("playerName", StringArgumentType.word())
                                         .suggests((context, builder) -> {
-                                            context.getSource().getServer().getPlayerList().getPlayers().forEach(player -> builder.suggest(player.getGameProfile().name()));
+                                            String prefix = builder.getRemaining();
+                                            context.getSource().getServer().getPlayerList().getPlayers().stream()
+                                                    .filter(player -> player.getGameProfile().name().toLowerCase().startsWith(prefix.toLowerCase()))
+                                                    .forEach(player -> builder.suggest(player.getGameProfile().name()));
                                             return builder.buildFuture();
                                         })
                                         .then(Commands.argument("currencyName", StringArgumentType.string())
                                                 .suggests((context, builder) -> {
-                                                    datManager.get().getAllCurrencyNames().forEach(builder::suggest);
+                                                    String prefix = builder.getRemaining();
+                                                    datManager.get().getAllCurrencyNames()
+                                                            .forEach(currency -> {
+                                                                if (currency.toLowerCase().startsWith(prefix.toLowerCase())) {
+                                                                    builder.suggest(currency);
+                                                                }
+                                                            });
                                                     return builder.buildFuture();
                                                 })
                                                 .then(Commands.argument("amount", IntegerArgumentType.integer(1))
@@ -473,7 +504,10 @@ public class adminCommands {
                         .then(Commands.literal("activatePendingCurrency")
                                 .then(Commands.argument("playerName", StringArgumentType.word())
                                         .suggests((context, builder) -> {
-                                            context.getSource().getServer().getPlayerList().getPlayers().forEach(p -> builder.suggest(p.getGameProfile().name()));
+                                            String prefix = builder.getRemaining();
+                                            context.getSource().getServer().getPlayerList().getPlayers().stream()
+                                                    .filter(p -> p.getGameProfile().name().toLowerCase().startsWith(prefix.toLowerCase()))
+                                                    .forEach(p -> builder.suggest(p.getGameProfile().name()));
                                             return builder.buildFuture();
                                         })
                                         .executes(context -> {
@@ -525,7 +559,10 @@ public class adminCommands {
                         .then(Commands.literal("cancelPendingCurrency")
                                 .then(Commands.argument("playerName", StringArgumentType.word())
                                         .suggests((context, builder) -> {
-                                            context.getSource().getServer().getPlayerList().getPlayers().forEach(p -> builder.suggest(p.getGameProfile().name()));
+                                            String prefix = builder.getRemaining();
+                                            context.getSource().getServer().getPlayerList().getPlayers().stream()
+                                                    .filter(p -> p.getGameProfile().name().toLowerCase().startsWith(prefix.toLowerCase()))
+                                                    .forEach(p -> builder.suggest(p.getGameProfile().name()));
                                             return builder.buildFuture();
                                         })
                                         .executes(context -> {
@@ -573,7 +610,10 @@ public class adminCommands {
                         .then(Commands.literal("removePlayerCurrency")
                                 .then(Commands.argument("playerName", StringArgumentType.word())
                                         .suggests((context, builder) -> {
-                                            context.getSource().getServer().getPlayerList().getPlayers().forEach(player -> builder.suggest(player.getGameProfile().name()));
+                                            String prefix = builder.getRemaining();
+                                            context.getSource().getServer().getPlayerList().getPlayers().stream()
+                                                    .filter(player -> player.getGameProfile().name().toLowerCase().startsWith(prefix.toLowerCase()))
+                                                    .forEach(player -> builder.suggest(player.getGameProfile().name()));
                                             return builder.buildFuture();
                                         })
                                         .then(Commands.argument("amount", IntegerArgumentType.integer(1))

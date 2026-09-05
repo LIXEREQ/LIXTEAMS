@@ -18,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(Item.class)
 public class PaperItemMixin {
 
-    private static final String WITHDRAWAL_PREFIX = "[LIXTEAMS-WITHDRAW:";
+    private static final String TAG_PATTERN = "] ";
 
     @Inject(method = "use", at = @At("HEAD"), cancellable = true)
     private void lixteams$onUse(Level level, Player user, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
@@ -37,20 +37,16 @@ public class PaperItemMixin {
         }
 
         String nameText = customName.getString();
-        if (!nameText.startsWith(WITHDRAWAL_PREFIX)) {
+        int separatorIndex = nameText.lastIndexOf(TAG_PATTERN);
+        if (separatorIndex == -1) {
             return;
         }
 
-        String suffix = nameText.substring(WITHDRAWAL_PREFIX.length()).replace("]", "");
-        String[] parts = suffix.split(":");
-        if (parts.length < 2) {
-            return;
-        }
-
-        String currencyName = parts[0];
+        String currencyName = nameText.substring(1, separatorIndex); // strip leading '['
+        String amountStr = nameText.substring(separatorIndex + TAG_PATTERN.length());
         long amount;
         try {
-            amount = Long.parseLong(parts[1]);
+            amount = Long.parseLong(amountStr);
         } catch (NumberFormatException e) {
             return;
         }

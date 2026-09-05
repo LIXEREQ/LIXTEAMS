@@ -164,7 +164,10 @@ public class commands {
                         .then(Commands.literal("accept")
                                 .then(Commands.argument("playerName", StringArgumentType.word())
                                         .suggests((context, builder) -> {
-                                            context.getSource().getServer().getPlayerList().getPlayers().forEach(player -> builder.suggest(player.getGameProfile().name()));
+                                            String prefix = builder.getRemaining();
+                                            context.getSource().getServer().getPlayerList().getPlayers().stream()
+                                                    .filter(player -> player.getGameProfile().name().toLowerCase().startsWith(prefix.toLowerCase()))
+                                                    .forEach(player -> builder.suggest(player.getGameProfile().name()));
                                             return builder.buildFuture();
                                         })
                                         .executes(context -> {
@@ -217,7 +220,10 @@ public class commands {
                         .then(Commands.literal("deny")
                                 .then(Commands.argument("playerName", StringArgumentType.word())
                                         .suggests((context, builder) -> {
-                                            context.getSource().getServer().getPlayerList().getPlayers().forEach(player -> builder.suggest(player.getGameProfile().name()));
+                                            String prefix = builder.getRemaining();
+                                            context.getSource().getServer().getPlayerList().getPlayers().stream()
+                                                    .filter(player -> player.getGameProfile().name().toLowerCase().startsWith(prefix.toLowerCase()))
+                                                    .forEach(player -> builder.suggest(player.getGameProfile().name()));
                                             return builder.buildFuture();
                                         })
                                         .executes(context -> {
@@ -293,10 +299,15 @@ public class commands {
                                 .then(Commands.argument("teamName", StringArgumentType.string())
                                         .suggests((context, builder) -> {
                                             ServerPlayer player = context.getSource().getPlayer();
+                                            String prefix = builder.getRemaining();
                                             if (player != null) {
                                                 datManager.get()
                                                         .getInvitedTeams(player.getUUID())
-                                                        .forEach(builder::suggest);
+                                                        .forEach(team -> {
+                                                            if (team.toLowerCase().startsWith(prefix.toLowerCase())) {
+                                                                builder.suggest(team);
+                                                            }
+                                                        });
                                             }
                                             return builder.buildFuture();
                                         })
@@ -337,10 +348,15 @@ public class commands {
                                 .then(Commands.argument("teamName", StringArgumentType.string())
                                         .suggests((context, builder) -> {
                                             ServerPlayer player = context.getSource().getPlayer();
+                                            String prefix = builder.getRemaining();
                                             if (player != null) {
                                                 datManager.get()
                                                         .getInvitedTeams(player.getUUID())
-                                                        .forEach(builder::suggest);
+                                                        .forEach(team -> {
+                                                            if (team.toLowerCase().startsWith(prefix.toLowerCase())) {
+                                                                builder.suggest(team);
+                                                            }
+                                                        });
                                             }
                                             return builder.buildFuture();
                                         })
@@ -524,6 +540,7 @@ public class commands {
                                         .suggests((context, builder) -> {
                                             ServerPlayer player = context.getSource().getPlayer();
                                             CompoundTag teams = datManager.get().getData().getCompoundOrEmpty("teams");
+                                            String prefix = builder.getRemaining();
 
                                             CompoundTag teamData = null;
                                             for (String teamName : teams.keySet()) {
@@ -538,7 +555,11 @@ public class commands {
                                             if (teamData == null) return builder.buildFuture();
 
                                             CompoundTag settings = teamData.getCompoundOrEmpty("settings");
-                                            for (String key : settings.keySet()) builder.suggest(key);
+                                            for (String key : settings.keySet()) {
+                                                if (key.toLowerCase().startsWith(prefix.toLowerCase())) {
+                                                    builder.suggest(key);
+                                                }
+                                            }
 
                                             return builder.buildFuture();
                                         })
@@ -625,21 +646,25 @@ public class commands {
                         .then(Commands.literal("set")
                                 .then(Commands.argument("field", StringArgumentType.word())
                                         .suggests((ctx, builder) -> {
-                                            builder.suggest("name");
-                                            builder.suggest("tag");
-                                            builder.suggest("color");
-                                            builder.suggest("currencyName");
-                                            builder.suggest("currencyTag");
+                                            String prefix = builder.getRemaining();
+                                            for (String field : new String[]{"name", "tag", "color", "currencyName", "currencyTag"}) {
+                                                if (field.toLowerCase().startsWith(prefix.toLowerCase())) {
+                                                    builder.suggest(field);
+                                                }
+                                            }
                                             return builder.buildFuture();
                                         })
                                         .then(Commands.argument("value", StringArgumentType.greedyString())
                                                 .suggests((ctx, builder) -> {
                                                     String field = StringArgumentType.getString(ctx, "field");
-                                                        if (field.equalsIgnoreCase("color")) {
-                                                            for (String color : new String[]{"WHITE", "ORANGE", "MAGENTA", "LIGHT_BLUE", "YELLOW", "LIME", "PINK", "GRAY", "LIGHT_GRAY", "CYAN", "GREEN", "BROWN", "PURPLE", "BLUE", "GOLD", "RED", "BLACK"}) {
+                                                    String prefix = builder.getRemaining();
+                                                    if (field.equalsIgnoreCase("color")) {
+                                                        for (String color : new String[]{"WHITE", "ORANGE", "MAGENTA", "LIGHT_BLUE", "YELLOW", "LIME", "PINK", "GRAY", "LIGHT_GRAY", "CYAN", "GREEN", "BROWN", "PURPLE", "BLUE", "GOLD", "RED", "BLACK"}) {
+                                                            if (color.toLowerCase().startsWith(prefix.toLowerCase())) {
                                                                 builder.suggest(color);
                                                             }
                                                         }
+                                                    }
                                                     return builder.buildFuture();
                                                 })
                                                 .executes(context -> {
@@ -1022,6 +1047,7 @@ public class commands {
                                 .then(Commands.argument("playerName", StringArgumentType.word())
                                         .suggests((context, builder) -> {
                                             ServerPlayer owner = context.getSource().getPlayer();
+                                            String prefix = builder.getRemaining();
                                             if (owner == null) return builder.buildFuture();
 
                                             CompoundTag teams = datManager.get().getData().getCompoundOrEmpty("teams");
@@ -1044,7 +1070,9 @@ public class commands {
                                                 if (!ownerStr.equals(memberUUID)) {
                                                     ServerPlayer member = server.getPlayerList().getPlayer(UUID.fromString(memberUUID));
 
-                                                    if (member != null) builder.suggest(member.getGameProfile().name());
+                                                    if (member != null && member.getGameProfile().name().toLowerCase().startsWith(prefix.toLowerCase())) {
+                                                        builder.suggest(member.getGameProfile().name());
+                                                    }
                                                 }
                                             }
 
@@ -1081,11 +1109,14 @@ public class commands {
                                 .then(Commands.argument("currency", StringArgumentType.string())
                                         .suggests((context, builder) -> {
                                             ServerPlayer player = context.getSource().getPlayer();
+                                            String prefix = builder.getRemaining();
                                             if (player != null) {
                                                 String playerUuid = player.getUUID().toString();
                                                 List<String> currencies = datManager.get().getPlayerCurrencies(playerUuid);
                                                 for (String currencyName : currencies) {
-                                                    builder.suggest(currencyName);
+                                                    if (currencyName.toLowerCase().startsWith(prefix.toLowerCase())) {
+                                                        builder.suggest(currencyName);
+                                                    }
                                                 }
                                             }
                                             return builder.buildFuture();
@@ -1119,7 +1150,8 @@ public class commands {
                                                         datManager.get().subtractPlayerCurrencyBalance(playerUuid, requestedCurrency, amount);
 
                                                         ItemStack withdrawalPaper = new ItemStack(Items.PAPER);
-                                                        withdrawalPaper.set(DataComponents.CUSTOM_NAME, Component.literal("[LIXTEAMS-WITHDRAW:" + requestedCurrency + ":" + amount + "]"));
+                                                        String currencyTagStr = datManager.get().getTeamCurrencyTagString(teamName);
+                                                        withdrawalPaper.set(DataComponents.CUSTOM_NAME, Component.literal("[" + currencyTagStr + "] " + amount));
 
                                                         if (player.getInventory().add(withdrawalPaper)) {
                                                             context.getSource().sendSuccess(
@@ -1149,7 +1181,10 @@ public class commands {
                         .then(Commands.literal("balance")
                                 .then(Commands.argument("playerName", StringArgumentType.word())
                                         .suggests((context, builder) -> {
-                                            context.getSource().getServer().getPlayerList().getPlayers().forEach(player -> builder.suggest(player.getGameProfile().name()));
+                                            String prefix = builder.getRemaining();
+                                            context.getSource().getServer().getPlayerList().getPlayers().stream()
+                                                    .filter(player -> player.getGameProfile().name().toLowerCase().startsWith(prefix.toLowerCase()))
+                                                    .forEach(player -> builder.suggest(player.getGameProfile().name()));
                                             return builder.buildFuture();
                                         })
                                         .executes(context -> {

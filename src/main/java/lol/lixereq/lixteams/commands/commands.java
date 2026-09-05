@@ -659,7 +659,7 @@ public class commands {
                                                     String field = StringArgumentType.getString(ctx, "field");
                                                     String prefix = builder.getRemaining();
                                                     if (field.equalsIgnoreCase("color")) {
-                                                        for (String color : new String[]{"WHITE", "ORANGE", "MAGENTA", "LIGHT_BLUE", "YELLOW", "LIME", "PINK", "GRAY", "LIGHT_GRAY", "CYAN", "GREEN", "BROWN", "PURPLE", "BLUE", "GOLD", "RED", "BLACK"}) {
+                                                        for (String color : new String[]{"WHITE", "YELLOW", "GRAY", "GREEN", "BLUE", "GOLD", "RED", "BLACK", "DARK_BLUE", "DARK_GREEN", "DARK_AQUA", "DARK_RED", "DARK_PURPLE", "DARK_GRAY", "AQUA", "LIGHT_PURPLE"}) {
                                                             if (color.toLowerCase().startsWith(prefix.toLowerCase())) {
                                                                 builder.suggest(color);
                                                             }

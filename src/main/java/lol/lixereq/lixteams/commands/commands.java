@@ -1184,6 +1184,10 @@ public class commands {
                                             context.getSource().getServer().getPlayerList().getPlayers().stream()
                                                     .filter(player -> player.getGameProfile().name().toLowerCase().startsWith(prefix.toLowerCase()))
                                                     .forEach(player -> builder.suggest(player.getGameProfile().name()));
+                                            List<String> offlineNames = datManager.get().getOfflinePlayerNames(prefix);
+                                            for (String name : offlineNames) {
+                                                builder.suggest(name);
+                                            }
                                             return builder.buildFuture();
                                         })
                                         .executes(context -> {
@@ -1195,12 +1199,23 @@ public class commands {
                                                     .getPlayerList()
                                                     .getPlayerByName(targetName);
 
-                                            if (targetPlayer == null) {
-                                                context.getSource().sendFailure(Component.literal("Player not found or not online!"));
+                                            if (targetPlayer != null) {
+                                                return displayBalance(context.getSource(), targetPlayer);
+                                            }
+
+                                            // Fallback to offline player lookup
+                                            String targetUuid = datManager.get().getUuidForPlayerName(targetName);
+                                            if (targetUuid.isEmpty()) {
+                                                context.getSource().sendFailure(Component.literal("Player not found (online or offline)!"));
                                                 return 0;
                                             }
 
-                                            return displayBalance(context.getSource(), targetPlayer);
+                                            String displayName = datManager.get().getPlayerNameForUuid(targetUuid);
+                                            if (displayName.isEmpty()) {
+                                                displayName = targetName;
+                                            }
+
+                                            return displayBalanceOffline(context.getSource(), targetUuid, displayName);
                                         })
                                 )
                                 .executes(context -> {
@@ -1216,11 +1231,14 @@ public class commands {
     }
 
     private static int displayBalance(CommandSourceStack source, ServerPlayer player) {
-        String playerUuid = player.getUUID().toString();
+        return displayBalanceOffline(source, player.getUUID().toString(), player.getGameProfile().name());
+    }
+
+    private static int displayBalanceOffline(CommandSourceStack source, String playerUuid, String displayName) {
         List<String> currencies = datManager.get().getPlayerCurrencies(playerUuid);
 
         MutableComponent message = Component.literal("Balance for ")
-                .append(Component.literal(player.getGameProfile().name()).withStyle(ChatFormatting.YELLOW))
+                .append(Component.literal(displayName).withStyle(ChatFormatting.YELLOW))
                 .append(Component.literal("\n").withStyle(ChatFormatting.GOLD));
 
         if (currencies.isEmpty()) {

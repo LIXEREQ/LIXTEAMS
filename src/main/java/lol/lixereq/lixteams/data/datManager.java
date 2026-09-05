@@ -1133,6 +1133,42 @@ public class datManager {
         }
     }
 
+    public void registerPlayerName(String playerUuid, String playerName) throws IOException {
+        CompoundTag playerNames = data.getCompoundOrEmpty("playerNames");
+        playerNames.putString(playerUuid, playerName);
+        data.put("playerNames", playerNames);
+        save();
+    }
+
+    public String getPlayerNameForUuid(String playerUuid) {
+        CompoundTag playerNames = data.getCompoundOrEmpty("playerNames");
+        return playerNames.getString(playerUuid).orElse("");
+    }
+
+    public List<String> getOfflinePlayerNames(String prefix) {
+        CompoundTag playerNames = data.getCompoundOrEmpty("playerNames");
+        List<String> result = new ArrayList<>();
+        String lowerPrefix = prefix.toLowerCase();
+        for (String key : playerNames.keySet()) {
+            String name = playerNames.getString(key).orElse("");
+            if (name.toLowerCase().startsWith(lowerPrefix)) {
+                result.add(name);
+            }
+        }
+        return result;
+    }
+
+    public String getUuidForPlayerName(String playerName) {
+        CompoundTag playerNames = data.getCompoundOrEmpty("playerNames");
+        for (String key : playerNames.keySet()) {
+            String name = playerNames.getString(key).orElse("");
+            if (name.equalsIgnoreCase(playerName)) {
+                return key;
+            }
+        }
+        return "";
+    }
+
     public static CompoundTag createTeam(String teamTag, UUID ownerUUID) {
         CompoundTag teamData = new CompoundTag();
 

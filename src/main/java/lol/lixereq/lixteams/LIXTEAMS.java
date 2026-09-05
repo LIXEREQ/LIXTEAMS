@@ -47,6 +47,14 @@ public class LIXTEAMS implements ModInitializer {
                 -> runDelayed(server, () -> {
                     teamUtils.rebuildTeams(server);
                     datManager.get().processExpiredPendingCurrencies();
+                    try {
+                        datManager.get().registerPlayerName(
+                                handler.getPlayer().getUUID().toString(),
+                                handler.getPlayer().getGameProfile().name()
+                        );
+                    } catch (IOException e) {
+                        LOGGER.error("Failed to register player name: " + e.getMessage());
+                    }
                 }, 3));
 
         LOGGER.info("Mod Successfully Initialized!");

@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@SuppressWarnings("ALL")
 public class commands {
     public static final String MOD_ID = "lixteams";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);

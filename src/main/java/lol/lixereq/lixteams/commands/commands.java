@@ -185,7 +185,7 @@ public class commands {
                                                         .getPlayerByName(targetName);
 
                                                 if (targetPlayer == null) {
-                                                    context.getSource().sendFailure(Component.literal("Player not found or not online!"));
+                                                    context.getSource().sendFailure(Component.literal("Player not found"));
                                                     return 0;
                                                 }
 
@@ -235,7 +235,7 @@ public class commands {
                                                     .getPlayerList().getPlayerByName(targetName);
 
                                             if (targetPlayer == null) {
-                                                context.getSource().sendFailure(Component.literal("Player not found or not online!"));
+                                                context.getSource().sendFailure(Component.literal("Player not found"));
                                                 return 0;
                                             }
 
@@ -1085,7 +1085,7 @@ public class commands {
                                             MinecraftServer server = context.getSource().getServer();
                                             ServerPlayer target = server.getPlayerList().getPlayerByName(targetName);
                                             if (target == null) {
-                                                context.getSource().sendFailure(Component.literal("Player not found or not online!"));
+                                                context.getSource().sendFailure(Component.literal("Player not found"));
                                                 return 0;
                                             }
 
@@ -1206,7 +1206,7 @@ public class commands {
                                             // Fallback to offline player lookup
                                             String targetUuid = datManager.get().getUuidForPlayerName(targetName);
                                             if (targetUuid.isEmpty()) {
-                                                context.getSource().sendFailure(Component.literal("Player not found (online or offline)!"));
+                                                context.getSource().sendFailure(Component.literal("Player not found"));
                                                 return 0;
                                             }
 

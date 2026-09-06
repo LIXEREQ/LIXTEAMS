@@ -464,7 +464,7 @@ public class adminCommands {
                                                                     .getPlayerByName(targetName);
 
                                                             if (targetPlayer == null) {
-                                                                context.getSource().sendFailure(Component.literal("Player not found or not online!"));
+                                                                context.getSource().sendFailure(Component.literal("Player not found"));
                                                                 return 0;
                                                             }
 
@@ -520,7 +520,7 @@ public class adminCommands {
                                                     .getPlayerByName(targetName);
 
                                             if (targetPlayer == null) {
-                                                context.getSource().sendFailure(Component.literal("Player not found or not online!"));
+                                                context.getSource().sendFailure(Component.literal("Player not found"));
                                                 return 0;
                                             }
 
@@ -575,7 +575,7 @@ public class adminCommands {
                                                     .getPlayerByName(targetName);
 
                                             if (targetPlayer == null) {
-                                                context.getSource().sendFailure(Component.literal("Player not found or not online!"));
+                                                context.getSource().sendFailure(Component.literal("Player not found"));
                                                 return 0;
                                             }
 
@@ -627,7 +627,7 @@ public class adminCommands {
                                                             .getPlayerByName(targetName);
 
                                                     if (targetPlayer == null) {
-                                                        context.getSource().sendFailure(Component.literal("Player not found or not online!"));
+                                                        context.getSource().sendFailure(Component.literal("Player not found"));
                                                         return 0;
                                                     }
 

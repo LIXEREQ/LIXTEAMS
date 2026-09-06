@@ -1149,7 +1149,7 @@ public class commands {
                                                         datManager.get().subtractPlayerCurrencyBalance(playerUuid, requestedCurrency, amount);
 
                                                         ItemStack withdrawalPaper = new ItemStack(Items.PAPER);
-                                                        String currencyTagStr = datManager.get().getTeamCurrencyTagString(teamName);
+                                                        String currencyTagStr = datManager.get().getTeamCurrencyTagStringForCurrency(requestedCurrency);
                                                         withdrawalPaper.set(DataComponents.CUSTOM_NAME, Component.literal("[" + currencyTagStr + "] " + amount));
 
                                                         if (player.getInventory().add(withdrawalPaper)) {
